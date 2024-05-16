@@ -18,9 +18,9 @@ This directory uses `npins`, as using flakes requires constantly running `nix fl
 
 ## Testing
 
-Tests are stored in `extra/tests/<part>`. You can run them all with `nix-build -E '(import ./extra).checks.tests` (or `.stdlib`, `.auxlib`).
+Tests are stored in `extra/tests/<part>`. You can run them all with `nix-build -E '(import ./extra {}).checks.tests` (or `.stdlib`, `.auxlib`).
 
-You should also check your formatting with `nix-build -E '(import ./extra).checks.formatting`.
+You should also check your formatting with `nix-build -E '(import ./extra {}).checks.formatting`.
 
 ## Documentation
 
@@ -28,4 +28,4 @@ Reference documentation for library functions is written above each function as 
 These comments are processed using [nixdoc](https://github.com/nix-community/nixdoc), although currently we aren't doing much with the output.
 The nixdoc README describes the [comment format](https://github.com/nix-community/nixdoc#comment-format).
 
-You can build the documentation with `nix-build -E '(import ./extra).packages.docs'`.
+You can build the documentation with `nix-build -E '(import ./extra {}).packages.docs'`.
