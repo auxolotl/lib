@@ -495,20 +495,20 @@ checkConfigOutput '^"pear\\npear"$' config.twice.raw ./merge-module-with-key.nix
 
 # Declaration positions
 # Line should be present for direct options
-checkConfigOutput '^8$' options.imported.line8.declarationPositions.0.line ./declaration-positions.nix
-checkConfigOutput '/declaration-positions.nix"$' options.imported.line8.declarationPositions.0.file ./declaration-positions.nix
+checkConfigOutput '^14$' options.imported.line14.declarationPositions.0.line ./declaration-positions.nix
+checkConfigOutput '/declaration-positions.nix"$' options.imported.line14.declarationPositions.0.file ./declaration-positions.nix
 # Generated options may not have line numbers but they will at least get the
 # right file
-checkConfigOutput '/declaration-positions.nix"$' options.generated.line14.declarationPositions.0.file ./declaration-positions.nix
-checkConfigOutput '^null$' options.generated.line14.declarationPositions.0.line ./declaration-positions.nix
+checkConfigOutput '/declaration-positions.nix"$' options.generated.line19.declarationPositions.0.file ./declaration-positions.nix
+checkConfigOutput '^null$' options.generated.line19.declarationPositions.0.line ./declaration-positions.nix
 # Submodules don't break it
-checkConfigOutput '^28$' config.submoduleLine24.submodDeclLine28.0.line ./declaration-positions.nix
-checkConfigOutput '/declaration-positions.nix"$' config.submoduleLine24.submodDeclLine28.0.file ./declaration-positions.nix
+checkConfigOutput '^37$' config.submoduleLine30.submodDeclLine37.0.line ./declaration-positions.nix
+checkConfigOutput '/declaration-positions.nix"$' config.submoduleLine30.submodDeclLine37.0.file ./declaration-positions.nix
 # New options under freeform submodules get collected into the parent submodule
 # (consistent with .declarations behaviour, but weird; notably appears in system.build)
-checkConfigOutput '^24$' options.submoduleLine24.declarationPositions.0.line ./declaration-positions.nix
+checkConfigOutput '^30$' options.submoduleLine30.declarationPositions.0.line ./declaration-positions.nix
 # nested options work
-checkConfigOutput '^22$' options.nested.nestedLine22.declarationPositions.0.line ./declaration-positions.nix
+checkConfigOutput '^28$' options.nested.nestedLine28.declarationPositions.0.line ./declaration-positions.nix
 
 cat <<EOF
 ====== module tests ======

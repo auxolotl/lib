@@ -11,30 +11,30 @@ assert
 {
   imports = [
     {
-      options.imported.line8 = lib.mkOption { type = lib.types.int; };
+      options.imported.line14 = lib.mkOption { type = lib.types.int; };
 
       # Simulates various patterns of generating modules such as
       # programs.firefox.nativeMessagingHosts.ff2mpv. We don't expect to get
       # line numbers for these, but we can fall back on knowing the file.
-      options.generated = discardPositions { line14 = lib.mkOption { type = lib.types.int; }; };
+      options.generated = discardPositions { line19 = lib.mkOption { type = lib.types.int; }; };
 
-      options.submoduleLine16.extraOptLine16 = lib.mkOption {
+      options.submoduleLine21.extraOptLine21 = lib.mkOption {
         default = 1;
         type = lib.types.int;
       };
     }
   ];
 
-  options.nested.nestedLine22 = lib.mkOption { type = lib.types.int; };
+  options.nested.nestedLine28 = lib.mkOption { type = lib.types.int; };
 
-  options.submoduleLine24 = lib.mkOption {
+  options.submoduleLine30 = lib.mkOption {
     default = { };
     type = lib.types.submoduleWith {
       modules = [
         (
           { options, ... }:
           {
-            options.submodDeclLine28 = lib.mkOption { };
+            options.submodDeclLine37 = lib.mkOption { };
           }
         )
         { freeformType = with lib.types; lazyAttrsOf (uniq unspecified); }
@@ -43,7 +43,7 @@ assert
   };
 
   config = {
-    submoduleLine24.submodDeclLine28 =
-      (options.submoduleLine24.type.getSubOptions [ ]).submodDeclLine28.declarationPositions;
+    submoduleLine30.submodDeclLine37 =
+      (options.submoduleLine30.type.getSubOptions [ ]).submodDeclLine37.declarationPositions;
   };
 }
