@@ -1,6 +1,8 @@
 { lib }:
-let inherit (lib) mkIf versionAtLeast versionOlder;
-in {
+let
+  inherit (lib) mkIf versionAtLeast versionOlder;
+in
+{
   # Keeping these around in case we decide to change this horrible implementation :)
   option = x: x // { optional = true; };
 
@@ -30,7 +32,6 @@ in {
     whenAtLeast = ver: mkIf (versionAtLeast version ver);
     whenOlder = ver: mkIf (versionOlder version ver);
     # range is (inclusive, exclusive)
-    whenBetween = verLow: verHigh:
-      mkIf (versionAtLeast version verLow && versionOlder version verHigh);
+    whenBetween = verLow: verHigh: mkIf (versionAtLeast version verLow && versionOlder version verHigh);
   };
 }

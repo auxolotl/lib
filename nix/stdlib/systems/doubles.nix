@@ -113,7 +113,8 @@ let
   allParsed = map parse.mkSystemFromString all;
 
   filterDoubles = f: map parse.doubleFromSystem (lists.filter f allParsed);
-in {
+in
+{
   inherit all;
 
   none = [ ];
@@ -147,28 +148,35 @@ in {
   darwin = filterDoubles predicates.isDarwin;
   freebsd = filterDoubles predicates.isFreeBSD;
   # Should be better, but MinGW is unclear.
-  gnu = filterDoubles (matchAttrs {
-    kernel = parse.kernels.linux;
-    abi = parse.abis.gnu;
-  }) ++ filterDoubles (matchAttrs {
-    kernel = parse.kernels.linux;
-    abi = parse.abis.gnueabi;
-  }) ++ filterDoubles (matchAttrs {
-    kernel = parse.kernels.linux;
-    abi = parse.abis.gnueabihf;
-  }) ++ filterDoubles (matchAttrs {
-    kernel = parse.kernels.linux;
-    abi = parse.abis.gnuabin32;
-  }) ++ filterDoubles (matchAttrs {
-    kernel = parse.kernels.linux;
-    abi = parse.abis.gnuabi64;
-  }) ++ filterDoubles (matchAttrs {
-    kernel = parse.kernels.linux;
-    abi = parse.abis.gnuabielfv1;
-  }) ++ filterDoubles (matchAttrs {
-    kernel = parse.kernels.linux;
-    abi = parse.abis.gnuabielfv2;
-  });
+  gnu =
+    filterDoubles (matchAttrs {
+      kernel = parse.kernels.linux;
+      abi = parse.abis.gnu;
+    })
+    ++ filterDoubles (matchAttrs {
+      kernel = parse.kernels.linux;
+      abi = parse.abis.gnueabi;
+    })
+    ++ filterDoubles (matchAttrs {
+      kernel = parse.kernels.linux;
+      abi = parse.abis.gnueabihf;
+    })
+    ++ filterDoubles (matchAttrs {
+      kernel = parse.kernels.linux;
+      abi = parse.abis.gnuabin32;
+    })
+    ++ filterDoubles (matchAttrs {
+      kernel = parse.kernels.linux;
+      abi = parse.abis.gnuabi64;
+    })
+    ++ filterDoubles (matchAttrs {
+      kernel = parse.kernels.linux;
+      abi = parse.abis.gnuabielfv1;
+    })
+    ++ filterDoubles (matchAttrs {
+      kernel = parse.kernels.linux;
+      abi = parse.abis.gnuabielfv2;
+    });
   illumos = filterDoubles predicates.isSunOS;
   linux = filterDoubles predicates.isLinux;
   netbsd = filterDoubles predicates.isNetBSD;
