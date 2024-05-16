@@ -5,9 +5,7 @@
 # By default it test the version of nixpkgs which is defined in the NIX_PATH.
 #
 # Run:
-# [nixpkgs]$ ./tests/stdlib/modules.sh
-# or:
-# [nixpkgs]$ nix-build lib/tests/release.nix
+# [nixpkgs]$ ./extra/tests/stdlib/modules.sh
 
 set -o errexit -o noclobber -o nounset -o pipefail
 shopt -s failglob inherit_errexit
