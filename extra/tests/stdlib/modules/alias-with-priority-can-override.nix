@@ -6,9 +6,15 @@
 
 { config, lib, ... }:
 
-let inherit (lib) mkAliasOptionModule mkForce mkOption types;
-
-in {
+let
+  inherit (lib)
+    mkAliasOptionModule
+    mkForce
+    mkOption
+    types
+    ;
+in
+{
   options = {
     # A simple boolean option that can be enabled or disabled.
     enable = mkOption {
@@ -39,9 +45,19 @@ in {
 
     # Disable the aliased option with a high priority so it
     # should override the next import.
-    ({ config, lib, ... }: { enableAlias = mkForce false; })
+    (
+      { config, lib, ... }:
+      {
+        enableAlias = mkForce false;
+      }
+    )
 
     # Enable the normal (non-aliased) option.
-    ({ config, lib, ... }: { enable = true; })
+    (
+      { config, lib, ... }:
+      {
+        enable = true;
+      }
+    )
   ];
 }

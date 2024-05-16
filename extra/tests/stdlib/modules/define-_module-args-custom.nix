@@ -1,5 +1,7 @@
 { lib, ... }:
 
 {
-  config = { _module.args.custom = true; };
+  config = {
+    _module.args.custom = true;
+  };
 }

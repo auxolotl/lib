@@ -1,6 +1,8 @@
 { config, lib, ... }:
-let inherit (lib) mkOption types;
-in {
+let
+  inherit (lib) mkOption types;
+in
+{
   options.bare-submodule = mkOption {
     type = types.submoduleWith {
       modules = [ ];

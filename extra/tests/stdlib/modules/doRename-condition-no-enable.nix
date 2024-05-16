@@ -1,6 +1,13 @@
-{ config, lib, options, ... }: {
+{
+  config,
+  lib,
+  options,
+  ...
+}:
+{
   config = {
-    result = assert config.services.foos == { };
+    result =
+      assert config.services.foos == { };
       assert !options.services.foo.bar.isDefined;
       true;
   };

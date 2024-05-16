@@ -6,9 +6,15 @@
 
 { config, lib, ... }:
 
-let inherit (lib) mkAliasOptionModule mkDefault mkOption types;
-
-in {
+let
+  inherit (lib)
+    mkAliasOptionModule
+    mkDefault
+    mkOption
+    types
+    ;
+in
+{
   options = {
     # A simple boolean option that can be enabled or disabled.
     enable = mkOption {
@@ -39,9 +45,19 @@ in {
 
     # Disable the aliased option, but with a default (low) priority so it
     # should be able to be overridden by the next import.
-    ({ config, lib, ... }: { enableAlias = mkDefault false; })
+    (
+      { config, lib, ... }:
+      {
+        enableAlias = mkDefault false;
+      }
+    )
 
     # Enable the normal (non-aliased) option.
-    ({ config, lib, ... }: { enable = true; })
+    (
+      { config, lib, ... }:
+      {
+        enable = true;
+      }
+    )
   ];
 }

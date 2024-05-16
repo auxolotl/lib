@@ -1,6 +1,8 @@
 { lib, ... }:
-let inherit (lib) mkOption;
-in {
+let
+  inherit (lib) mkOption;
+in
+{
   wrong1 = mkOption { };
   # This is not actually reported separately, so could be omitted from the test
   # but it makes the example more realistic.

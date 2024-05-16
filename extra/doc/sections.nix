@@ -1,4 +1,8 @@
-auxlib: let libPath = "${auxlib}/nix"; in [
+auxlib:
+let
+  libPath = "${auxlib}/nix";
+in
+[
   {
     name = "asserts";
     description = "assertion functions";
@@ -76,8 +80,7 @@ auxlib: let libPath = "${auxlib}/nix"; in [
   }
   {
     name = "customisation";
-    description =
-      "Functions to customise (derivation-related) functions, derivatons, or attribute sets";
+    description = "Functions to customise (derivation-related) functions, derivatons, or attribute sets";
     path = "${libPath}/stdlib/customisation.nix";
   }
   {

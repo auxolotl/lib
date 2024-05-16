@@ -8,23 +8,26 @@ let
     expected = lib.sort lib.lessThan y;
   };
 
-  /* Try to convert an elaborated system back to a simple string. If not possible,
-     return null. So we have the property:
+  /*
+    Try to convert an elaborated system back to a simple string. If not possible,
+    return null. So we have the property:
 
-         sys: _valid_ sys ->
-           sys == elaborate (toLosslessStringMaybe sys)
+        sys: _valid_ sys ->
+          sys == elaborate (toLosslessStringMaybe sys)
 
-     NOTE: This property is not guaranteed when `sys` was elaborated by a different
-           version of Nixpkgs.
+    NOTE: This property is not guaranteed when `sys` was elaborated by a different
+          version of Nixpkgs.
   */
-  toLosslessStringMaybe = sys:
+  toLosslessStringMaybe =
+    sys:
     if lib.isString sys then
       sys
     else if lib.systems.equals sys (lib.systems.elaborate sys.system) then
       sys.system
     else
       null;
-in lib.runTests (
+in
+lib.runTests (
   # We assert that the new algorithmic way of generating these lists matches the
   # way they were hard-coded before.
   #
@@ -33,9 +36,21 @@ in lib.runTests (
   # tests as new platforms become supported, and then just give the diff a quick
   # sanity check before committing :).
   (with lib.systems.doubles; {
-    testall = mseteq all (linux ++ darwin ++ freebsd ++ openbsd ++ netbsd
-      ++ illumos ++ wasi ++ windows ++ embedded ++ mmix ++ js ++ genode
-      ++ redox);
+    testall = mseteq all (
+      linux
+      ++ darwin
+      ++ freebsd
+      ++ openbsd
+      ++ netbsd
+      ++ illumos
+      ++ wasi
+      ++ windows
+      ++ embedded
+      ++ mmix
+      ++ js
+      ++ genode
+      ++ redox
+    );
 
     testarm = mseteq arm [
       "armv5tel-linux"
@@ -92,11 +107,20 @@ in lib.runTests (
       "riscv32-none"
       "riscv64-none"
     ];
-    testriscv32 =
-      mseteq riscv32 [ "riscv32-linux" "riscv32-netbsd" "riscv32-none" ];
-    testriscv64 =
-      mseteq riscv64 [ "riscv64-linux" "riscv64-netbsd" "riscv64-none" ];
-    tests390x = mseteq s390x [ "s390x-linux" "s390x-none" ];
+    testriscv32 = mseteq riscv32 [
+      "riscv32-linux"
+      "riscv32-netbsd"
+      "riscv32-none"
+    ];
+    testriscv64 = mseteq riscv64 [
+      "riscv64-linux"
+      "riscv64-netbsd"
+      "riscv64-none"
+    ];
+    tests390x = mseteq s390x [
+      "s390x-linux"
+      "s390x-none"
+    ];
     testx86_64 = mseteq x86_64 [
       "x86_64-linux"
       "x86_64-darwin"
@@ -111,18 +135,28 @@ in lib.runTests (
       "x86_64-none"
     ];
 
-    testcygwin = mseteq cygwin [ "i686-cygwin" "x86_64-cygwin" ];
+    testcygwin = mseteq cygwin [
+      "i686-cygwin"
+      "x86_64-cygwin"
+    ];
     testdarwin = mseteq darwin [
       "x86_64-darwin"
       "i686-darwin"
       "aarch64-darwin"
       "armv7a-darwin"
     ];
-    testfreebsd = mseteq freebsd [ "i686-freebsd13" "x86_64-freebsd13" ];
-    testgenode =
-      mseteq genode [ "aarch64-genode" "i686-genode" "x86_64-genode" ];
+    testfreebsd = mseteq freebsd [
+      "i686-freebsd13"
+      "x86_64-freebsd13"
+    ];
+    testgenode = mseteq genode [
+      "aarch64-genode"
+      "i686-genode"
+      "x86_64-genode"
+    ];
     testredox = mseteq redox [ "x86_64-redox" ];
-    testgnu = mseteq gnu (linux
+    testgnu = mseteq gnu (
+      linux
       # ++ kfreebsd ++ ...
     );
     testillumos = mseteq illumos [ "x86_64-solaris" ];
@@ -162,19 +196,25 @@ in lib.runTests (
       "riscv64-netbsd"
       "x86_64-netbsd"
     ];
-    testopenbsd = mseteq openbsd [ "i686-openbsd" "x86_64-openbsd" ];
+    testopenbsd = mseteq openbsd [
+      "i686-openbsd"
+      "x86_64-openbsd"
+    ];
     testwindows = mseteq windows [
       "i686-cygwin"
       "x86_64-cygwin"
       "i686-windows"
       "x86_64-windows"
     ];
-    testunix = mseteq unix (linux ++ darwin ++ freebsd ++ openbsd ++ netbsd
-      ++ illumos ++ cygwin ++ redox);
-  }) // {
+    testunix = mseteq unix (
+      linux ++ darwin ++ freebsd ++ openbsd ++ netbsd ++ illumos ++ cygwin ++ redox
+    );
+  })
+  // {
     test_equals_example_x86_64-linux = {
-      expr = lib.systems.equals (lib.systems.elaborate "x86_64-linux")
-        (lib.systems.elaborate "x86_64-linux");
+      expr = lib.systems.equals (lib.systems.elaborate "x86_64-linux") (
+        lib.systems.elaborate "x86_64-linux"
+      );
       expected = true;
     };
 
@@ -183,30 +223,36 @@ in lib.runTests (
       expected = "x86_64-linux";
     };
     test_toLosslessStringMaybe_fail = {
-      expr = toLosslessStringMaybe
-        (lib.systems.elaborate "x86_64-linux" // { something = "extra"; });
+      expr = toLosslessStringMaybe (lib.systems.elaborate "x86_64-linux" // { something = "extra"; });
       expected = null;
     };
   }
   # Generate test cases to assert that a change in any non-function attribute makes a platform unequal
-  // lib.concatMapAttrs (platformAttrName: origValue: {
-    ${"test_equals_unequal_${platformAttrName}"} = let
-      modified = assert origValue != arbitraryValue;
-        lib.systems.elaborate "x86_64-linux" // {
-          ${platformAttrName} = arbitraryValue;
-        };
-      arbitraryValue = x: "<<modified>>";
-    in {
-      expr = lib.systems.equals (lib.systems.elaborate "x86_64-linux") modified;
-      expected = {
-        # Changes in these attrs are not detectable because they're function.
-        # The functions should be derived from the data, so this is not a problem.
-        canExecute = null;
-        emulator = null;
-        emulatorAvailable = null;
-        isCompatible = null;
-      } ? ${platformAttrName};
-    };
-  }) (lib.systems.elaborate "x86_64-linux"
-    # arbitrary choice, just to get all the elaborated attrNames
-  ))
+  //
+    lib.concatMapAttrs
+      (platformAttrName: origValue: {
+        ${"test_equals_unequal_${platformAttrName}"} =
+          let
+            modified =
+              assert origValue != arbitraryValue;
+              lib.systems.elaborate "x86_64-linux" // { ${platformAttrName} = arbitraryValue; };
+            arbitraryValue = x: "<<modified>>";
+          in
+          {
+            expr = lib.systems.equals (lib.systems.elaborate "x86_64-linux") modified;
+            expected =
+              {
+                # Changes in these attrs are not detectable because they're function.
+                # The functions should be derived from the data, so this is not a problem.
+                canExecute = null;
+                emulator = null;
+                emulatorAvailable = null;
+                isCompatible = null;
+              } ? ${platformAttrName};
+          };
+      })
+      (
+        lib.systems.elaborate "x86_64-linux"
+        # arbitrary choice, just to get all the elaborated attrNames
+      )
+)

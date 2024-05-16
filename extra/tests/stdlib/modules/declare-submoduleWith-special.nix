@@ -1,10 +1,18 @@
-{ lib, ... }: {
+{ lib, ... }:
+{
   options.submodule = lib.mkOption {
     type = lib.types.submoduleWith {
       modules = [
-        ({ lib, ... }: { options.foo = lib.mkOption { default = lib.foo; }; })
+        (
+          { lib, ... }:
+          {
+            options.foo = lib.mkOption { default = lib.foo; };
+          }
+        )
       ];
-      specialArgs.lib = lib // { foo = "foo"; };
+      specialArgs.lib = lib // {
+        foo = "foo";
+      };
     };
     default = { };
   };

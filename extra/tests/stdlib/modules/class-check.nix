@@ -1,4 +1,5 @@
-{ lib, ... }: {
+{ lib, ... }:
+{
   options = {
     sub = {
       nixosOk = lib.mkOption {
@@ -24,18 +25,20 @@
       };
     };
   };
-  imports = [{
-    options = {
-      sub = {
-        mergeFail = lib.mkOption {
-          type = lib.types.submoduleWith {
-            class = "darwin";
-            modules = [ ];
+  imports = [
+    {
+      options = {
+        sub = {
+          mergeFail = lib.mkOption {
+            type = lib.types.submoduleWith {
+              class = "darwin";
+              modules = [ ];
+            };
           };
         };
       };
-    };
-  }];
+    }
+  ];
   config = {
     _module.freeformType = lib.types.anything;
     ok = lib.evalModules {
@@ -45,7 +48,10 @@
 
     fail = lib.evalModules {
       class = "nixos";
-      modules = [ ./module-class-is-nixos.nix ./module-class-is-darwin.nix ];
+      modules = [
+        ./module-class-is-nixos.nix
+        ./module-class-is-darwin.nix
+      ];
     };
 
     fail-anon = lib.evalModules {
@@ -61,7 +67,11 @@
       ];
     };
 
-    sub.nixosOk = { _class = "nixos"; };
-    sub.nixosFail = { imports = [ ./module-class-is-darwin.nix ]; };
+    sub.nixosOk = {
+      _class = "nixos";
+    };
+    sub.nixosFail = {
+      imports = [ ./module-class-is-darwin.nix ];
+    };
   };
 }

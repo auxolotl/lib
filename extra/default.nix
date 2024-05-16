@@ -1,9 +1,10 @@
+{
+  nixpkgs ? (import ./npins).nixpkgs,
+}:
 let
-  sources = import ./npins;
-
   libSrc = ../.;
   lib = import libSrc;
-  pkgs = import sources.nixpkgs {
+  pkgs = import nixpkgs {
     overlays = [
       # update nixfmt, as nixpkgs is pretty out of date
       (

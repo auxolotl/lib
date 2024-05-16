@@ -1,5 +1,7 @@
 { lib, ... }:
 
 {
-  options = { value = lib.mkOption { type = lib.types.ints.unsigned; }; };
+  options = {
+    value = lib.mkOption { type = lib.types.ints.unsigned; };
+  };
 }

@@ -7,6 +7,6 @@
 # CI.  Bonus: the tests build way faster.
 #
 # See also: https://github.com/NixOS/nix/issues/7582
-builtins.mapAttrs (_: pkg:
-  if builtins.isAttrs pkg then pkg.override { withAWS = false; } else pkg)
-pkgs.nixVersions
+builtins.mapAttrs (
+  _: pkg: if builtins.isAttrs pkg then pkg.override { withAWS = false; } else pkg
+) pkgs.nixVersions

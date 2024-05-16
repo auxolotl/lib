@@ -1,537 +1,584 @@
-/* *
-   General list operations.
+/*
+  *
+  General list operations.
 */
 { lib }:
 let
   inherit (lib.strings) toInt;
-  inherit (lib.trivial) compare min id warn pipe;
+  inherit (lib.trivial)
+    compare
+    min
+    id
+    warn
+    pipe
+    ;
   inherit (lib.attrsets) mapAttrs;
-in rec {
+in
+rec {
   inherit (builtins)
-    head tail length isList elemAt concatLists filter elem genList map;
+    head
+    tail
+    length
+    isList
+    elemAt
+    concatLists
+    filter
+    elem
+    genList
+    map
+    ;
 
-  /* *
-     Create a list consisting of a single element. `singleton x` is
-     sometimes more convenient with respect to indentation than `[x]`
-     when x spans multiple lines.
+  /*
+    *
+    Create a list consisting of a single element. `singleton x` is
+    sometimes more convenient with respect to indentation than `[x]`
+    when x spans multiple lines.
 
-     # Inputs
+    # Inputs
 
-     `x`
+    `x`
 
-     : 1\. Function argument
+    : 1\. Function argument
 
-     # Type
+    # Type
 
-     ```
-     singleton :: a -> [a]
-     ```
+    ```
+    singleton :: a -> [a]
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.singleton` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.singleton` usage example
 
-     ```nix
-     singleton "foo"
-     => [ "foo" ]
-     ```
+    ```nix
+    singleton "foo"
+    => [ "foo" ]
+    ```
 
-     :::
+    :::
   */
   singleton = x: [ x ];
 
-  /* *
-     Apply the function to each element in the list.
-     Same as `map`, but arguments flipped.
+  /*
+    *
+    Apply the function to each element in the list.
+    Same as `map`, but arguments flipped.
 
-     # Inputs
+    # Inputs
 
-     `xs`
+    `xs`
 
-     : 1\. Function argument
+    : 1\. Function argument
 
-     `f`
+    `f`
 
-     : 2\. Function argument
+    : 2\. Function argument
 
-     # Type
+    # Type
 
-     ```
-     forEach :: [a] -> (a -> b) -> [b]
-     ```
+    ```
+    forEach :: [a] -> (a -> b) -> [b]
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.forEach` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.forEach` usage example
 
-     ```nix
-     forEach [ 1 2 ] (x:
-       toString x
-     )
-     => [ "1" "2" ]
-     ```
+    ```nix
+    forEach [ 1 2 ] (x:
+      toString x
+    )
+    => [ "1" "2" ]
+    ```
 
-     :::
+    :::
   */
   forEach = xs: f: map f xs;
 
-  /* *
-     “right fold” a binary function `op` between successive elements of
-     `list` with `nul` as the starting value, i.e.,
-     `foldr op nul [x_1 x_2 ... x_n] == op x_1 (op x_2 ... (op x_n nul))`.
+  /*
+    *
+    “right fold” a binary function `op` between successive elements of
+    `list` with `nul` as the starting value, i.e.,
+    `foldr op nul [x_1 x_2 ... x_n] == op x_1 (op x_2 ... (op x_n nul))`.
 
-     # Inputs
+    # Inputs
 
-     `op`
+    `op`
 
-     : 1\. Function argument
+    : 1\. Function argument
 
-     `nul`
+    `nul`
 
-     : 2\. Function argument
+    : 2\. Function argument
 
-     `list`
+    `list`
 
-     : 3\. Function argument
+    : 3\. Function argument
 
-     # Type
+    # Type
 
-     ```
-     foldr :: (a -> b -> b) -> b -> [a] -> b
-     ```
+    ```
+    foldr :: (a -> b -> b) -> b -> [a] -> b
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.foldr` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.foldr` usage example
 
-     ```nix
-     concat = foldr (a: b: a + b) "z"
-     concat [ "a" "b" "c" ]
-     => "abcz"
-     # different types
-     strange = foldr (int: str: toString (int + 1) + str) "a"
-     strange [ 1 2 3 4 ]
-     => "2345a"
-     ```
+    ```nix
+    concat = foldr (a: b: a + b) "z"
+    concat [ "a" "b" "c" ]
+    => "abcz"
+    # different types
+    strange = foldr (int: str: toString (int + 1) + str) "a"
+    strange [ 1 2 3 4 ]
+    => "2345a"
+    ```
 
-     :::
+    :::
   */
-  foldr = op: nul: list:
+  foldr =
+    op: nul: list:
     let
       len = length list;
       fold' = n: if n == len then nul else op (elemAt list n) (fold' (n + 1));
-    in fold' 0;
+    in
+    fold' 0;
 
-  /* *
-     `fold` is an alias of `foldr` for historic reasons
+  /*
+    *
+    `fold` is an alias of `foldr` for historic reasons
   */
   # FIXME(Profpatsch): deprecate?
   fold = foldr;
 
-  /* *
-     “left fold”, like `foldr`, but from the left:
+  /*
+    *
+    “left fold”, like `foldr`, but from the left:
 
-     `foldl op nul [x_1 x_2 ... x_n] == op (... (op (op nul x_1) x_2) ... x_n)`.
+    `foldl op nul [x_1 x_2 ... x_n] == op (... (op (op nul x_1) x_2) ... x_n)`.
 
-     # Inputs
+    # Inputs
 
-     `op`
+    `op`
 
-     : 1\. Function argument
+    : 1\. Function argument
 
-     `nul`
+    `nul`
 
-     : 2\. Function argument
+    : 2\. Function argument
 
-     `list`
+    `list`
 
-     : 3\. Function argument
+    : 3\. Function argument
 
-     # Type
+    # Type
 
-     ```
-     foldl :: (b -> a -> b) -> b -> [a] -> b
-     ```
+    ```
+    foldl :: (b -> a -> b) -> b -> [a] -> b
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.foldl` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.foldl` usage example
 
-     ```nix
-     lconcat = foldl (a: b: a + b) "z"
-     lconcat [ "a" "b" "c" ]
-     => "zabc"
-     # different types
-     lstrange = foldl (str: int: str + toString (int + 1)) "a"
-     lstrange [ 1 2 3 4 ]
-     => "a2345"
-     ```
+    ```nix
+    lconcat = foldl (a: b: a + b) "z"
+    lconcat [ "a" "b" "c" ]
+    => "zabc"
+    # different types
+    lstrange = foldl (str: int: str + toString (int + 1)) "a"
+    lstrange [ 1 2 3 4 ]
+    => "a2345"
+    ```
 
-     :::
+    :::
   */
-  foldl = op: nul: list:
+  foldl =
+    op: nul: list:
     let
       foldl' = n: if n == -1 then nul else op (foldl' (n - 1)) (elemAt list n);
-    in foldl' (length list - 1);
+    in
+    foldl' (length list - 1);
 
-  /* *
-     Reduce a list by applying a binary operator from left to right,
-     starting with an initial accumulator.
+  /*
+    *
+    Reduce a list by applying a binary operator from left to right,
+    starting with an initial accumulator.
 
-     Before each application of the operator, the accumulator value is evaluated.
-     This behavior makes this function stricter than [`foldl`](#function-library-lib.lists.foldl).
+    Before each application of the operator, the accumulator value is evaluated.
+    This behavior makes this function stricter than [`foldl`](#function-library-lib.lists.foldl).
 
-     Unlike [`builtins.foldl'`](https://nixos.org/manual/nix/unstable/language/builtins.html#builtins-foldl'),
-     the initial accumulator argument is evaluated before the first iteration.
+    Unlike [`builtins.foldl'`](https://nixos.org/manual/nix/unstable/language/builtins.html#builtins-foldl'),
+    the initial accumulator argument is evaluated before the first iteration.
 
-     A call like
+    A call like
 
-     ```nix
-     foldl' op acc₀ [ x₀ x₁ x₂ ... xₙ₋₁ xₙ ]
-     ```
+    ```nix
+    foldl' op acc₀ [ x₀ x₁ x₂ ... xₙ₋₁ xₙ ]
+    ```
 
-     is (denotationally) equivalent to the following,
-     but with the added benefit that `foldl'` itself will never overflow the stack.
+    is (denotationally) equivalent to the following,
+    but with the added benefit that `foldl'` itself will never overflow the stack.
 
-     ```nix
-     let
-       acc₁   = builtins.seq acc₀   (op acc₀   x₀  );
-       acc₂   = builtins.seq acc₁   (op acc₁   x₁  );
-       acc₃   = builtins.seq acc₂   (op acc₂   x₂  );
-       ...
-       accₙ   = builtins.seq accₙ₋₁ (op accₙ₋₁ xₙ₋₁);
-       accₙ₊₁ = builtins.seq accₙ   (op accₙ   xₙ  );
-     in
-     accₙ₊₁
+    ```nix
+    let
+      acc₁   = builtins.seq acc₀   (op acc₀   x₀  );
+      acc₂   = builtins.seq acc₁   (op acc₁   x₁  );
+      acc₃   = builtins.seq acc₂   (op acc₂   x₂  );
+      ...
+      accₙ   = builtins.seq accₙ₋₁ (op accₙ₋₁ xₙ₋₁);
+      accₙ₊₁ = builtins.seq accₙ   (op accₙ   xₙ  );
+    in
+    accₙ₊₁
 
-     # Or ignoring builtins.seq
-     op (op (... (op (op (op acc₀ x₀) x₁) x₂) ...) xₙ₋₁) xₙ
-     ```
+    # Or ignoring builtins.seq
+    op (op (... (op (op (op acc₀ x₀) x₁) x₂) ...) xₙ₋₁) xₙ
+    ```
 
-     # Inputs
+    # Inputs
 
-     `op`
+    `op`
 
-     : The binary operation to run, where the two arguments are:
+    : The binary operation to run, where the two arguments are:
 
-     1. `acc`: The current accumulator value: Either the initial one for the first iteration, or the result of the previous iteration
-     2. `x`: The corresponding list element for this iteration
+    1. `acc`: The current accumulator value: Either the initial one for the first iteration, or the result of the previous iteration
+    2. `x`: The corresponding list element for this iteration
 
-     `acc`
+    `acc`
 
-     : The initial accumulator value.
+    : The initial accumulator value.
 
-       The accumulator value is evaluated in any case before the first iteration starts.
+      The accumulator value is evaluated in any case before the first iteration starts.
 
-       To avoid evaluation even before the `list` argument is given an eta expansion can be used:
+      To avoid evaluation even before the `list` argument is given an eta expansion can be used:
 
-       ```nix
-       list: lib.foldl' op acc list
-       ```
+      ```nix
+      list: lib.foldl' op acc list
+      ```
 
-     `list`
+    `list`
 
-     : The list to fold
+    : The list to fold
 
-     # Type
+    # Type
 
-     ```
-     foldl' :: (acc -> x -> acc) -> acc -> [x] -> acc
-     ```
+    ```
+    foldl' :: (acc -> x -> acc) -> acc -> [x] -> acc
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.foldl'` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.foldl'` usage example
 
-     ```nix
-     foldl' (acc: x: acc + x) 0 [1 2 3]
-     => 6
-     ```
+    ```nix
+    foldl' (acc: x: acc + x) 0 [1 2 3]
+    => 6
+    ```
 
-     :::
+    :::
   */
-  foldl' = op: acc:
+  foldl' =
+    op: acc:
     # The builtin `foldl'` is a bit lazier than one might expect.
     # See https://github.com/NixOS/nix/pull/7158.
     # In particular, the initial accumulator value is not forced before the first iteration starts.
     builtins.seq acc (builtins.foldl' op acc);
 
-  /* *
-     Map with index starting from 0
+  /*
+    *
+    Map with index starting from 0
 
-     # Inputs
+    # Inputs
 
-     `f`
+    `f`
 
-     : 1\. Function argument
+    : 1\. Function argument
 
-     `list`
+    `list`
 
-     : 2\. Function argument
+    : 2\. Function argument
 
-     # Type
+    # Type
 
-     ```
-     imap0 :: (int -> a -> b) -> [a] -> [b]
-     ```
+    ```
+    imap0 :: (int -> a -> b) -> [a] -> [b]
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.imap0` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.imap0` usage example
 
-     ```nix
-     imap0 (i: v: "${v}-${toString i}") ["a" "b"]
-     => [ "a-0" "b-1" ]
-     ```
+    ```nix
+    imap0 (i: v: "${v}-${toString i}") ["a" "b"]
+    => [ "a-0" "b-1" ]
+    ```
 
-     :::
+    :::
   */
   imap0 = f: list: genList (n: f n (elemAt list n)) (length list);
 
-  /* *
-     Map with index starting from 1
+  /*
+    *
+    Map with index starting from 1
 
-     # Inputs
+    # Inputs
 
-     `f`
+    `f`
 
-     : 1\. Function argument
+    : 1\. Function argument
 
-     `list`
+    `list`
 
-     : 2\. Function argument
+    : 2\. Function argument
 
-     # Type
+    # Type
 
-     ```
-     imap1 :: (int -> a -> b) -> [a] -> [b]
-     ```
+    ```
+    imap1 :: (int -> a -> b) -> [a] -> [b]
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.imap1` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.imap1` usage example
 
-     ```nix
-     imap1 (i: v: "${v}-${toString i}") ["a" "b"]
-     => [ "a-1" "b-2" ]
-     ```
+    ```nix
+    imap1 (i: v: "${v}-${toString i}") ["a" "b"]
+    => [ "a-1" "b-2" ]
+    ```
 
-     :::
+    :::
   */
   imap1 = f: list: genList (n: f (n + 1) (elemAt list n)) (length list);
 
-  /* *
-     Filter a list for elements that satisfy a predicate function.
-     The predicate function is called with both the index and value for each element.
-     It must return `true`/`false` to include/exclude a given element in the result.
-     This function is strict in the result of the predicate function for each element.
-     This function has O(n) complexity.
+  /*
+    *
+    Filter a list for elements that satisfy a predicate function.
+    The predicate function is called with both the index and value for each element.
+    It must return `true`/`false` to include/exclude a given element in the result.
+    This function is strict in the result of the predicate function for each element.
+    This function has O(n) complexity.
 
-     Also see [`builtins.filter`](https://nixos.org/manual/nix/stable/language/builtins.html#builtins-filter) (available as `lib.lists.filter`),
-     which can be used instead when the index isn't needed.
+    Also see [`builtins.filter`](https://nixos.org/manual/nix/stable/language/builtins.html#builtins-filter) (available as `lib.lists.filter`),
+    which can be used instead when the index isn't needed.
 
-     # Inputs
+    # Inputs
 
-     `ipred`
+    `ipred`
 
-     : The predicate function, it takes two arguments:
-       - 1. (int): the index of the element.
-       - 2. (a): the value of the element.
+    : The predicate function, it takes two arguments:
+      - 1. (int): the index of the element.
+      - 2. (a): the value of the element.
 
-       It must return `true`/`false` to include/exclude a given element from the result.
+      It must return `true`/`false` to include/exclude a given element from the result.
 
-     `list`
+    `list`
 
-     : The list to filter using the predicate.
+    : The list to filter using the predicate.
 
-     # Type
-     ```
-     ifilter0 :: (int -> a -> bool) -> [a] -> [a]
-     ```
+    # Type
+    ```
+    ifilter0 :: (int -> a -> bool) -> [a] -> [a]
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.ifilter0` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.ifilter0` usage example
 
-     ```nix
-     ifilter0 (i: v: i == 0 || v > 2) [ 1 2 3 ]
-     => [ 1 3 ]
-     ```
-     :::
+    ```nix
+    ifilter0 (i: v: i == 0 || v > 2) [ 1 2 3 ]
+    => [ 1 3 ]
+    ```
+    :::
   */
-  ifilter0 = ipred: input:
-    map (idx: elemAt input idx) (filter (idx: ipred idx (elemAt input idx))
-      (genList (x: x) (length input)));
+  ifilter0 =
+    ipred: input:
+    map (idx: elemAt input idx) (
+      filter (idx: ipred idx (elemAt input idx)) (genList (x: x) (length input))
+    );
 
-  /* *
-     Map and concatenate the result.
+  /*
+    *
+    Map and concatenate the result.
 
-     # Type
+    # Type
 
-     ```
-     concatMap :: (a -> [b]) -> [a] -> [b]
-     ```
+    ```
+    concatMap :: (a -> [b]) -> [a] -> [b]
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.concatMap` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.concatMap` usage example
 
-     ```nix
-     concatMap (x: [x] ++ ["z"]) ["a" "b"]
-     => [ "a" "z" "b" "z" ]
-     ```
+    ```nix
+    concatMap (x: [x] ++ ["z"]) ["a" "b"]
+    => [ "a" "z" "b" "z" ]
+    ```
 
-     :::
+    :::
   */
   concatMap = builtins.concatMap;
 
-  /* *
-     Flatten the argument into a single list; that is, nested lists are
-     spliced into the top-level lists.
+  /*
+    *
+    Flatten the argument into a single list; that is, nested lists are
+    spliced into the top-level lists.
 
-     # Inputs
+    # Inputs
 
-     `x`
+    `x`
 
-     : 1\. Function argument
+    : 1\. Function argument
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.flatten` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.flatten` usage example
 
-     ```nix
-     flatten [1 [2 [3] 4] 5]
-     => [1 2 3 4 5]
-     flatten 1
-     => [1]
-     ```
+    ```nix
+    flatten [1 [2 [3] 4] 5]
+    => [1 2 3 4 5]
+    flatten 1
+    => [1]
+    ```
 
-     :::
+    :::
   */
   flatten = x: if isList x then concatMap (y: flatten y) x else [ x ];
 
-  /* *
-     Remove elements equal to 'e' from a list.  Useful for buildInputs.
+  /*
+    *
+    Remove elements equal to 'e' from a list.  Useful for buildInputs.
 
-     # Inputs
+    # Inputs
 
-     `e`
+    `e`
 
-     : Element to remove from `list`
+    : Element to remove from `list`
 
-     `list`
+    `list`
 
-     : The list
+    : The list
 
-     # Type
+    # Type
 
-     ```
-     remove :: a -> [a] -> [a]
-     ```
+    ```
+    remove :: a -> [a] -> [a]
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.remove` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.remove` usage example
 
-     ```nix
-     remove 3 [ 1 3 4 3 ]
-     => [ 1 4 ]
-     ```
+    ```nix
+    remove 3 [ 1 3 4 3 ]
+    => [ 1 4 ]
+    ```
 
-     :::
+    :::
   */
   remove = e: filter (x: x != e);
 
-  /* *
-     Find the sole element in the list matching the specified
-     predicate.
+  /*
+    *
+    Find the sole element in the list matching the specified
+    predicate.
 
-     Returns `default` if no such element exists, or
-     `multiple` if there are multiple matching elements.
+    Returns `default` if no such element exists, or
+    `multiple` if there are multiple matching elements.
 
-     # Inputs
+    # Inputs
 
-     `pred`
+    `pred`
 
-     : Predicate
+    : Predicate
 
-     `default`
+    `default`
 
-     : Default value to return if element was not found.
+    : Default value to return if element was not found.
 
-     `multiple`
+    `multiple`
 
-     : Default value to return if more than one element was found
+    : Default value to return if more than one element was found
 
-     `list`
+    `list`
 
-     : Input list
+    : Input list
 
-     # Type
+    # Type
 
-     ```
-     findSingle :: (a -> bool) -> a -> a -> [a] -> a
-     ```
+    ```
+    findSingle :: (a -> bool) -> a -> a -> [a] -> a
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.findSingle` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.findSingle` usage example
 
-     ```nix
-     findSingle (x: x == 3) "none" "multiple" [ 1 3 3 ]
-     => "multiple"
-     findSingle (x: x == 3) "none" "multiple" [ 1 3 ]
-     => 3
-     findSingle (x: x == 3) "none" "multiple" [ 1 9 ]
-     => "none"
-     ```
+    ```nix
+    findSingle (x: x == 3) "none" "multiple" [ 1 3 3 ]
+    => "multiple"
+    findSingle (x: x == 3) "none" "multiple" [ 1 3 ]
+    => 3
+    findSingle (x: x == 3) "none" "multiple" [ 1 9 ]
+    => "none"
+    ```
 
-     :::
+    :::
   */
-  findSingle = pred: default: multiple: list:
+  findSingle =
+    pred: default: multiple: list:
     let
       found = filter pred list;
       len = length found;
-    in if len == 0 then default else if len != 1 then multiple else head found;
+    in
+    if len == 0 then
+      default
+    else if len != 1 then
+      multiple
+    else
+      head found;
 
-  /* *
-     Find the first index in the list matching the specified
-     predicate or return `default` if no such element exists.
+  /*
+    *
+    Find the first index in the list matching the specified
+    predicate or return `default` if no such element exists.
 
-     # Inputs
+    # Inputs
 
-     `pred`
+    `pred`
 
-     : Predicate
+    : Predicate
 
-     `default`
+    `default`
 
-     : Default value to return
+    : Default value to return
 
-     `list`
+    `list`
 
-     : Input list
+    : Input list
 
-     # Type
+    # Type
 
-     ```
-     findFirstIndex :: (a -> Bool) -> b -> [a] -> (Int | b)
-     ```
+    ```
+    findFirstIndex :: (a -> Bool) -> b -> [a] -> (Int | b)
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.findFirstIndex` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.findFirstIndex` usage example
 
-     ```nix
-     findFirstIndex (x: x > 3) null [ 0 6 4 ]
-     => 1
-     findFirstIndex (x: x > 9) null [ 0 6 4 ]
-     => null
-     ```
+    ```nix
+    findFirstIndex (x: x > 3) null [ 0 6 4 ]
+    => 1
+    findFirstIndex (x: x > 9) null [ 0 6 4 ]
+    => null
+    ```
 
-     :::
+    :::
   */
-  findFirstIndex = pred: default: list:
+  findFirstIndex =
+    pred: default: list:
     let
       # A naive recursive implementation would be much simpler, but
       # would also overflow the evaluator stack. We use `foldl'` as a workaround
@@ -545,1022 +592,1092 @@ in rec {
       # - if index >= 0 then pred (elemAt list index) and all elements before (elemAt list index) didn't satisfy pred
       #
       # We start with index -1 and the 0'th element of the list, which satisfies the invariant
-      resultIndex = foldl' (index: el:
+      resultIndex = foldl' (
+        index: el:
         if index < 0 then
-        # No match yet before the current index, we need to check the element
+          # No match yet before the current index, we need to check the element
           if pred el then
-          # We have a match! Turn it into the actual index to prevent future iterations from modifying it
+            # We have a match! Turn it into the actual index to prevent future iterations from modifying it
             -index - 1
           else
-          # Still no match, update the index to the next element (we're counting down, so minus one)
+            # Still no match, update the index to the next element (we're counting down, so minus one)
             index - 1
         else
-        # There's already a match, propagate the index without evaluating anything
-          index) (-1) list;
-    in if resultIndex < 0 then default else resultIndex;
+          # There's already a match, propagate the index without evaluating anything
+          index
+      ) (-1) list;
+    in
+    if resultIndex < 0 then default else resultIndex;
 
-  /* *
-     Find the first element in the list matching the specified
-     predicate or return `default` if no such element exists.
+  /*
+    *
+    Find the first element in the list matching the specified
+    predicate or return `default` if no such element exists.
 
-     # Inputs
+    # Inputs
 
-     `pred`
+    `pred`
 
-     : Predicate
+    : Predicate
 
-     `default`
+    `default`
 
-     : Default value to return
+    : Default value to return
 
-     `list`
+    `list`
 
-     : Input list
+    : Input list
 
-     # Type
+    # Type
 
-     ```
-     findFirst :: (a -> bool) -> a -> [a] -> a
-     ```
+    ```
+    findFirst :: (a -> bool) -> a -> [a] -> a
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.findFirst` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.findFirst` usage example
 
-     ```nix
-     findFirst (x: x > 3) 7 [ 1 6 4 ]
-     => 6
-     findFirst (x: x > 9) 7 [ 1 6 4 ]
-     => 7
-     ```
+    ```nix
+    findFirst (x: x > 3) 7 [ 1 6 4 ]
+    => 6
+    findFirst (x: x > 9) 7 [ 1 6 4 ]
+    => 7
+    ```
 
-     :::
+    :::
   */
-  findFirst = pred: default: list:
-    let index = findFirstIndex pred null list;
-    in if index == null then default else elemAt list index;
+  findFirst =
+    pred: default: list:
+    let
+      index = findFirstIndex pred null list;
+    in
+    if index == null then default else elemAt list index;
 
-  /* *
-     Return true if function `pred` returns true for at least one
-     element of `list`.
+  /*
+    *
+    Return true if function `pred` returns true for at least one
+    element of `list`.
 
-     # Inputs
+    # Inputs
 
-     `pred`
+    `pred`
 
-     : Predicate
+    : Predicate
 
-     `list`
+    `list`
 
-     : Input list
+    : Input list
 
-     # Type
+    # Type
 
-     ```
-     any :: (a -> bool) -> [a] -> bool
-     ```
+    ```
+    any :: (a -> bool) -> [a] -> bool
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.any` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.any` usage example
 
-     ```nix
-     any isString [ 1 "a" { } ]
-     => true
-     any isString [ 1 { } ]
-     => false
-     ```
+    ```nix
+    any isString [ 1 "a" { } ]
+    => true
+    any isString [ 1 { } ]
+    => false
+    ```
 
-     :::
+    :::
   */
   any = builtins.any;
 
-  /* *
-     Return true if function `pred` returns true for all elements of
-     `list`.
+  /*
+    *
+    Return true if function `pred` returns true for all elements of
+    `list`.
 
-     # Inputs
+    # Inputs
 
-     `pred`
+    `pred`
 
-     : Predicate
+    : Predicate
 
-     `list`
+    `list`
 
-     : Input list
+    : Input list
 
-     # Type
+    # Type
 
-     ```
-     all :: (a -> bool) -> [a] -> bool
-     ```
+    ```
+    all :: (a -> bool) -> [a] -> bool
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.all` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.all` usage example
 
-     ```nix
-     all (x: x < 3) [ 1 2 ]
-     => true
-     all (x: x < 3) [ 1 2 3 ]
-     => false
-     ```
+    ```nix
+    all (x: x < 3) [ 1 2 ]
+    => true
+    all (x: x < 3) [ 1 2 3 ]
+    => false
+    ```
 
-     :::
+    :::
   */
   all = builtins.all;
 
-  /* *
-     Count how many elements of `list` match the supplied predicate
-     function.
+  /*
+    *
+    Count how many elements of `list` match the supplied predicate
+    function.
 
-     # Inputs
+    # Inputs
 
-     `pred`
+    `pred`
 
-     : Predicate
+    : Predicate
 
-     # Type
+    # Type
 
-     ```
-     count :: (a -> bool) -> [a] -> int
-     ```
+    ```
+    count :: (a -> bool) -> [a] -> int
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.count` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.count` usage example
 
-     ```nix
-     count (x: x == 3) [ 3 2 3 4 6 ]
-     => 2
-     ```
+    ```nix
+    count (x: x == 3) [ 3 2 3 4 6 ]
+    => 2
+    ```
 
-     :::
+    :::
   */
   count = pred: foldl' (c: x: if pred x then c + 1 else c) 0;
 
-  /* *
-     Return a singleton list or an empty list, depending on a boolean
-     value.  Useful when building lists with optional elements
-     (e.g. `++ optional (system == "i686-linux") firefox`).
+  /*
+    *
+    Return a singleton list or an empty list, depending on a boolean
+    value.  Useful when building lists with optional elements
+    (e.g. `++ optional (system == "i686-linux") firefox`).
 
-     # Inputs
+    # Inputs
 
-     `cond`
+    `cond`
 
-     : 1\. Function argument
+    : 1\. Function argument
 
-     `elem`
+    `elem`
 
-     : 2\. Function argument
+    : 2\. Function argument
 
-     # Type
+    # Type
 
-     ```
-     optional :: bool -> a -> [a]
-     ```
+    ```
+    optional :: bool -> a -> [a]
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.optional` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.optional` usage example
 
-     ```nix
-     optional true "foo"
-     => [ "foo" ]
-     optional false "foo"
-     => [ ]
-     ```
+    ```nix
+    optional true "foo"
+    => [ "foo" ]
+    optional false "foo"
+    => [ ]
+    ```
 
-     :::
+    :::
   */
   optional = cond: elem: if cond then [ elem ] else [ ];
 
-  /* *
-     Return a list or an empty list, depending on a boolean value.
+  /*
+    *
+    Return a list or an empty list, depending on a boolean value.
 
-     # Inputs
+    # Inputs
 
-     `cond`
+    `cond`
 
-     : Condition
+    : Condition
 
-     `elems`
+    `elems`
 
-     : List to return if condition is true
+    : List to return if condition is true
 
-     # Type
+    # Type
 
-     ```
-     optionals :: bool -> [a] -> [a]
-     ```
+    ```
+    optionals :: bool -> [a] -> [a]
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.optionals` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.optionals` usage example
 
-     ```nix
-     optionals true [ 2 3 ]
-     => [ 2 3 ]
-     optionals false [ 2 3 ]
-     => [ ]
-     ```
+    ```nix
+    optionals true [ 2 3 ]
+    => [ 2 3 ]
+    optionals false [ 2 3 ]
+    => [ ]
+    ```
 
-     :::
+    :::
   */
   optionals = cond: elems: if cond then elems else [ ];
 
-  /* *
-     If argument is a list, return it; else, wrap it in a singleton
-     list. If you're using this, you should almost certainly
-     reconsider if there isn't a more "well-typed" approach.
+  /*
+    *
+    If argument is a list, return it; else, wrap it in a singleton
+    list. If you're using this, you should almost certainly
+    reconsider if there isn't a more "well-typed" approach.
 
-     # Inputs
+    # Inputs
 
-     `x`
+    `x`
 
-     : 1\. Function argument
+    : 1\. Function argument
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.toList` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.toList` usage example
 
-     ```nix
-     toList [ 1 2 ]
-     => [ 1 2 ]
-     toList "hi"
-     => [ "hi "]
-     ```
+    ```nix
+    toList [ 1 2 ]
+    => [ 1 2 ]
+    toList "hi"
+    => [ "hi "]
+    ```
 
-     :::
+    :::
   */
   toList = x: if isList x then x else [ x ];
 
-  /* *
-     Return a list of integers from `first` up to and including `last`.
+  /*
+    *
+    Return a list of integers from `first` up to and including `last`.
 
-     # Inputs
+    # Inputs
 
-     `first`
+    `first`
 
-     : First integer in the range
+    : First integer in the range
 
-     `last`
+    `last`
 
-     : Last integer in the range
+    : Last integer in the range
 
-     # Type
+    # Type
 
-     ```
-     range :: int -> int -> [int]
-     ```
+    ```
+    range :: int -> int -> [int]
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.range` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.range` usage example
 
-     ```nix
-     range 2 4
-     => [ 2 3 4 ]
-     range 3 2
-     => [ ]
-     ```
+    ```nix
+    range 2 4
+    => [ 2 3 4 ]
+    range 3 2
+    => [ ]
+    ```
 
-     :::
+    :::
   */
-  range = first: last:
-    if first > last then [ ] else genList (n: first + n) (last - first + 1);
+  range = first: last: if first > last then [ ] else genList (n: first + n) (last - first + 1);
 
-  /* *
-     Return a list with `n` copies of an element.
+  /*
+    *
+    Return a list with `n` copies of an element.
 
-     # Inputs
+    # Inputs
 
-     `n`
+    `n`
 
-     : 1\. Function argument
+    : 1\. Function argument
 
-     `elem`
+    `elem`
 
-     : 2\. Function argument
+    : 2\. Function argument
 
-     # Type
+    # Type
 
-     ```
-     replicate :: int -> a -> [a]
-     ```
+    ```
+    replicate :: int -> a -> [a]
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.replicate` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.replicate` usage example
 
-     ```nix
-     replicate 3 "a"
-     => [ "a" "a" "a" ]
-     replicate 2 true
-     => [ true true ]
-     ```
+    ```nix
+    replicate 3 "a"
+    => [ "a" "a" "a" ]
+    replicate 2 true
+    => [ true true ]
+    ```
 
-     :::
+    :::
   */
   replicate = n: elem: genList (_: elem) n;
 
-  /* *
-     Splits the elements of a list in two lists, `right` and
-     `wrong`, depending on the evaluation of a predicate.
+  /*
+    *
+    Splits the elements of a list in two lists, `right` and
+    `wrong`, depending on the evaluation of a predicate.
 
-     # Inputs
+    # Inputs
 
-     `pred`
+    `pred`
 
-     : Predicate
+    : Predicate
 
-     `list`
+    `list`
 
-     : Input list
+    : Input list
 
-     # Type
+    # Type
 
-     ```
-     (a -> bool) -> [a] -> { right :: [a]; wrong :: [a]; }
-     ```
+    ```
+    (a -> bool) -> [a] -> { right :: [a]; wrong :: [a]; }
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.partition` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.partition` usage example
 
-     ```nix
-     partition (x: x > 2) [ 5 1 2 3 4 ]
-     => { right = [ 5 3 4 ]; wrong = [ 1 2 ]; }
-     ```
+    ```nix
+    partition (x: x > 2) [ 5 1 2 3 4 ]
+    => { right = [ 5 3 4 ]; wrong = [ 1 2 ]; }
+    ```
 
-     :::
+    :::
   */
   partition = builtins.partition;
 
-  /* *
-     Splits the elements of a list into many lists, using the return value of a predicate.
-     Predicate should return a string which becomes keys of attrset `groupBy` returns.
-     `groupBy'` allows to customise the combining function and initial value
+  /*
+    *
+    Splits the elements of a list into many lists, using the return value of a predicate.
+    Predicate should return a string which becomes keys of attrset `groupBy` returns.
+    `groupBy'` allows to customise the combining function and initial value
 
-     # Inputs
+    # Inputs
 
-     `op`
+    `op`
 
-     : 1\. Function argument
+    : 1\. Function argument
 
-     `nul`
+    `nul`
 
-     : 2\. Function argument
+    : 2\. Function argument
 
-     `pred`
+    `pred`
 
-     : 3\. Function argument
+    : 3\. Function argument
 
-     `lst`
+    `lst`
 
-     : 4\. Function argument
+    : 4\. Function argument
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.groupBy'` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.groupBy'` usage example
 
-     ```nix
-     groupBy (x: boolToString (x > 2)) [ 5 1 2 3 4 ]
-     => { true = [ 5 3 4 ]; false = [ 1 2 ]; }
-     groupBy (x: x.name) [ {name = "icewm"; script = "icewm &";}
-                           {name = "xfce";  script = "xfce4-session &";}
-                           {name = "icewm"; script = "icewmbg &";}
-                           {name = "mate";  script = "gnome-session &";}
-                         ]
-     => { icewm = [ { name = "icewm"; script = "icewm &"; }
-                    { name = "icewm"; script = "icewmbg &"; } ];
-          mate  = [ { name = "mate";  script = "gnome-session &"; } ];
-          xfce  = [ { name = "xfce";  script = "xfce4-session &"; } ];
-        }
+    ```nix
+    groupBy (x: boolToString (x > 2)) [ 5 1 2 3 4 ]
+    => { true = [ 5 3 4 ]; false = [ 1 2 ]; }
+    groupBy (x: x.name) [ {name = "icewm"; script = "icewm &";}
+                          {name = "xfce";  script = "xfce4-session &";}
+                          {name = "icewm"; script = "icewmbg &";}
+                          {name = "mate";  script = "gnome-session &";}
+                        ]
+    => { icewm = [ { name = "icewm"; script = "icewm &"; }
+                   { name = "icewm"; script = "icewmbg &"; } ];
+         mate  = [ { name = "mate";  script = "gnome-session &"; } ];
+         xfce  = [ { name = "xfce";  script = "xfce4-session &"; } ];
+       }
 
-     groupBy' builtins.add 0 (x: boolToString (x > 2)) [ 5 1 2 3 4 ]
-     => { true = 12; false = 3; }
-     ```
+    groupBy' builtins.add 0 (x: boolToString (x > 2)) [ 5 1 2 3 4 ]
+    => { true = 12; false = 3; }
+    ```
 
-     :::
+    :::
   */
-  groupBy' = op: nul: pred: lst:
+  groupBy' =
+    op: nul: pred: lst:
     mapAttrs (name: foldl op nul) (groupBy pred lst);
 
-  groupBy = builtins.groupBy or (pred:
-    foldl'
-    (r: e: let key = pred e; in r // { ${key} = (r.${key} or [ ]) ++ [ e ]; })
-    { });
+  groupBy =
+    builtins.groupBy or (
+      pred:
+      foldl' (
+        r: e:
+        let
+          key = pred e;
+        in
+        r // { ${key} = (r.${key} or [ ]) ++ [ e ]; }
+      ) { }
+    );
 
-  /* *
-     Merges two lists of the same size together. If the sizes aren't the same
-     the merging stops at the shortest. How both lists are merged is defined
-     by the first argument.
+  /*
+    *
+    Merges two lists of the same size together. If the sizes aren't the same
+    the merging stops at the shortest. How both lists are merged is defined
+    by the first argument.
 
-     # Inputs
+    # Inputs
 
-     `f`
+    `f`
 
-     : Function to zip elements of both lists
+    : Function to zip elements of both lists
 
-     `fst`
+    `fst`
 
-     : First list
+    : First list
 
-     `snd`
+    `snd`
 
-     : Second list
+    : Second list
 
-     # Type
+    # Type
 
-     ```
-     zipListsWith :: (a -> b -> c) -> [a] -> [b] -> [c]
-     ```
+    ```
+    zipListsWith :: (a -> b -> c) -> [a] -> [b] -> [c]
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.zipListsWith` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.zipListsWith` usage example
 
-     ```nix
-     zipListsWith (a: b: a + b) ["h" "l"] ["e" "o"]
-     => ["he" "lo"]
-     ```
+    ```nix
+    zipListsWith (a: b: a + b) ["h" "l"] ["e" "o"]
+    => ["he" "lo"]
+    ```
 
-     :::
+    :::
   */
-  zipListsWith = f: fst: snd:
-    genList (n: f (elemAt fst n) (elemAt snd n))
-    (min (length fst) (length snd));
+  zipListsWith =
+    f: fst: snd:
+    genList (n: f (elemAt fst n) (elemAt snd n)) (min (length fst) (length snd));
 
-  /* *
-     Merges two lists of the same size together. If the sizes aren't the same
-     the merging stops at the shortest.
+  /*
+    *
+    Merges two lists of the same size together. If the sizes aren't the same
+    the merging stops at the shortest.
 
-     # Inputs
+    # Inputs
 
-     `fst`
+    `fst`
 
-     : First list
+    : First list
 
-     `snd`
+    `snd`
 
-     : Second list
+    : Second list
 
-     # Type
+    # Type
 
-     ```
-     zipLists :: [a] -> [b] -> [{ fst :: a; snd :: b; }]
-     ```
+    ```
+    zipLists :: [a] -> [b] -> [{ fst :: a; snd :: b; }]
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.zipLists` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.zipLists` usage example
 
-     ```nix
-     zipLists [ 1 2 ] [ "a" "b" ]
-     => [ { fst = 1; snd = "a"; } { fst = 2; snd = "b"; } ]
-     ```
+    ```nix
+    zipLists [ 1 2 ] [ "a" "b" ]
+    => [ { fst = 1; snd = "a"; } { fst = 2; snd = "b"; } ]
+    ```
 
-     :::
+    :::
   */
   zipLists = zipListsWith (fst: snd: { inherit fst snd; });
 
-  /* *
-     Reverse the order of the elements of a list.
+  /*
+    *
+    Reverse the order of the elements of a list.
 
-     # Inputs
+    # Inputs
 
-     `xs`
+    `xs`
 
-     : 1\. Function argument
+    : 1\. Function argument
 
-     # Type
+    # Type
 
-     ```
-     reverseList :: [a] -> [a]
-     ```
+    ```
+    reverseList :: [a] -> [a]
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.reverseList` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.reverseList` usage example
 
-     ```nix
-     reverseList [ "b" "o" "j" ]
-     => [ "j" "o" "b" ]
-     ```
+    ```nix
+    reverseList [ "b" "o" "j" ]
+    => [ "j" "o" "b" ]
+    ```
 
-     :::
+    :::
   */
-  reverseList = xs: let l = length xs; in genList (n: elemAt xs (l - n - 1)) l;
-
-  /* *
-     Depth-First Search (DFS) for lists `list != []`.
-
-     `before a b == true` means that `b` depends on `a` (there's an
-     edge from `b` to `a`).
-
-     # Inputs
-
-     `stopOnCycles`
-
-     : 1\. Function argument
-
-     `before`
-
-     : 2\. Function argument
-
-     `list`
-
-     : 3\. Function argument
-
-     # Examples
-     :::{.example}
-     ## `lib.lists.listDfs` usage example
-
-     ```nix
-     listDfs true hasPrefix [ "/home/user" "other" "/" "/home" ]
-       == { minimal = "/";                  # minimal element
-            visited = [ "/home/user" ];     # seen elements (in reverse order)
-            rest    = [ "/home" "other" ];  # everything else
-          }
-
-     listDfs true hasPrefix [ "/home/user" "other" "/" "/home" "/" ]
-       == { cycle   = "/";                  # cycle encountered at this element
-            loops   = [ "/" ];              # and continues to these elements
-            visited = [ "/" "/home/user" ]; # elements leading to the cycle (in reverse order)
-            rest    = [ "/home" "other" ];  # everything else
-     ```
-
-     :::
-  */
-  listDfs = stopOnCycles: before: list:
+  reverseList =
+    xs:
     let
-      dfs' = us: visited: rest:
+      l = length xs;
+    in
+    genList (n: elemAt xs (l - n - 1)) l;
+
+  /*
+    *
+    Depth-First Search (DFS) for lists `list != []`.
+
+    `before a b == true` means that `b` depends on `a` (there's an
+    edge from `b` to `a`).
+
+    # Inputs
+
+    `stopOnCycles`
+
+    : 1\. Function argument
+
+    `before`
+
+    : 2\. Function argument
+
+    `list`
+
+    : 3\. Function argument
+
+    # Examples
+    :::{.example}
+    ## `lib.lists.listDfs` usage example
+
+    ```nix
+    listDfs true hasPrefix [ "/home/user" "other" "/" "/home" ]
+      == { minimal = "/";                  # minimal element
+           visited = [ "/home/user" ];     # seen elements (in reverse order)
+           rest    = [ "/home" "other" ];  # everything else
+         }
+
+    listDfs true hasPrefix [ "/home/user" "other" "/" "/home" "/" ]
+      == { cycle   = "/";                  # cycle encountered at this element
+           loops   = [ "/" ];              # and continues to these elements
+           visited = [ "/" "/home/user" ]; # elements leading to the cycle (in reverse order)
+           rest    = [ "/home" "other" ];  # everything else
+    ```
+
+    :::
+  */
+  listDfs =
+    stopOnCycles: before: list:
+    let
+      dfs' =
+        us: visited: rest:
         let
           c = filter (x: before x us) visited;
           b = partition (x: before x us) rest;
-        in if stopOnCycles && (length c > 0) then {
-          cycle = us;
-          loops = c;
-          inherit visited rest;
-        } else if length b.right == 0 then # nothing is before us
-        {
-          minimal = us;
-          inherit visited rest;
-        } else # grab the first one before us and continue
+        in
+        if stopOnCycles && (length c > 0) then
+          {
+            cycle = us;
+            loops = c;
+            inherit visited rest;
+          }
+        else if length b.right == 0 then # nothing is before us
+          {
+            minimal = us;
+            inherit visited rest;
+          }
+        # grab the first one before us and continue
+        else
           dfs' (head b.right) ([ us ] ++ visited) (tail b.right ++ b.wrong);
-    in dfs' (head list) [ ] (tail list);
+    in
+    dfs' (head list) [ ] (tail list);
 
-  /* *
-     Sort a list based on a partial ordering using DFS. This
-     implementation is O(N^2), if your ordering is linear, use `sort`
-     instead.
+  /*
+    *
+    Sort a list based on a partial ordering using DFS. This
+    implementation is O(N^2), if your ordering is linear, use `sort`
+    instead.
 
-     `before a b == true` means that `b` should be after `a`
-     in the result.
+    `before a b == true` means that `b` should be after `a`
+    in the result.
 
-     # Inputs
+    # Inputs
 
-     `before`
+    `before`
 
-     : 1\. Function argument
+    : 1\. Function argument
 
-     `list`
+    `list`
 
-     : 2\. Function argument
+    : 2\. Function argument
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.toposort` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.toposort` usage example
 
-     ```nix
-     toposort hasPrefix [ "/home/user" "other" "/" "/home" ]
-       == { result = [ "/" "/home" "/home/user" "other" ]; }
+    ```nix
+    toposort hasPrefix [ "/home/user" "other" "/" "/home" ]
+      == { result = [ "/" "/home" "/home/user" "other" ]; }
 
-     toposort hasPrefix [ "/home/user" "other" "/" "/home" "/" ]
-       == { cycle = [ "/home/user" "/" "/" ]; # path leading to a cycle
-            loops = [ "/" ]; }                # loops back to these elements
+    toposort hasPrefix [ "/home/user" "other" "/" "/home" "/" ]
+      == { cycle = [ "/home/user" "/" "/" ]; # path leading to a cycle
+           loops = [ "/" ]; }                # loops back to these elements
 
-     toposort hasPrefix [ "other" "/home/user" "/home" "/" ]
-       == { result = [ "other" "/" "/home" "/home/user" ]; }
+    toposort hasPrefix [ "other" "/home/user" "/home" "/" ]
+      == { result = [ "other" "/" "/home" "/home/user" ]; }
 
-     toposort (a: b: a < b) [ 3 2 1 ] == { result = [ 1 2 3 ]; }
-     ```
+    toposort (a: b: a < b) [ 3 2 1 ] == { result = [ 1 2 3 ]; }
+    ```
 
-     :::
+    :::
   */
-  toposort = before: list:
+  toposort =
+    before: list:
     let
       dfsthis = listDfs true before list;
       toporest = toposort before (dfsthis.visited ++ dfsthis.rest);
-    in if length list < 2 then # finish
-    {
-      result = list;
-    } else if dfsthis
-    ? cycle then # there's a cycle, starting from the current vertex, return it
-    {
-      cycle = reverseList ([ dfsthis.cycle ] ++ dfsthis.visited);
-      inherit (dfsthis) loops;
-    } else if toporest
-    ? cycle then # there's a cycle somewhere else in the graph, return it
+    in
+    if length list < 2 then # finish
+      { result = list; }
+    else if dfsthis ? cycle then # there's a cycle, starting from the current vertex, return it
+      {
+        cycle = reverseList ([ dfsthis.cycle ] ++ dfsthis.visited);
+        inherit (dfsthis) loops;
+      }
+    else if toporest ? cycle then # there's a cycle somewhere else in the graph, return it
       toporest
-      # Slow, but short. Can be made a bit faster with an explicit stack.
-    else # there are no cycles
-    {
-      result = [ dfsthis.minimal ] ++ toporest.result;
-    };
+    # Slow, but short. Can be made a bit faster with an explicit stack.
+    # there are no cycles
+    else
+      { result = [ dfsthis.minimal ] ++ toporest.result; };
 
-  /* *
-     Sort a list based on a comparator function which compares two
-     elements and returns true if the first argument is strictly below
-     the second argument.  The returned list is sorted in an increasing
-     order.  The implementation does a quick-sort.
+  /*
+    *
+    Sort a list based on a comparator function which compares two
+    elements and returns true if the first argument is strictly below
+    the second argument.  The returned list is sorted in an increasing
+    order.  The implementation does a quick-sort.
 
-     See also [`sortOn`](#function-library-lib.lists.sortOn), which applies the
-     default comparison on a function-derived property, and may be more efficient.
+    See also [`sortOn`](#function-library-lib.lists.sortOn), which applies the
+    default comparison on a function-derived property, and may be more efficient.
 
-     # Inputs
+    # Inputs
 
-     `comparator`
+    `comparator`
 
-     : 1\. Function argument
+    : 1\. Function argument
 
-     `list`
+    `list`
 
-     : 2\. Function argument
+    : 2\. Function argument
 
-     # Type
+    # Type
 
-     ```
-     sort :: (a -> a -> Bool) -> [a] -> [a]
-     ```
+    ```
+    sort :: (a -> a -> Bool) -> [a] -> [a]
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.sort` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.sort` usage example
 
-     ```nix
-     sort (p: q: p < q) [ 5 3 7 ]
-     => [ 3 5 7 ]
-     ```
+    ```nix
+    sort (p: q: p < q) [ 5 3 7 ]
+    => [ 3 5 7 ]
+    ```
 
-     :::
+    :::
   */
   sort = builtins.sort;
 
-  /* *
-     Sort a list based on the default comparison of a derived property `b`.
+  /*
+    *
+    Sort a list based on the default comparison of a derived property `b`.
 
-     The items are returned in `b`-increasing order.
+    The items are returned in `b`-increasing order.
 
-     **Performance**:
+    **Performance**:
 
-     The passed function `f` is only evaluated once per item,
-     unlike an unprepared [`sort`](#function-library-lib.lists.sort) using
-     `f p < f q`.
+    The passed function `f` is only evaluated once per item,
+    unlike an unprepared [`sort`](#function-library-lib.lists.sort) using
+    `f p < f q`.
 
-     **Laws**:
-     ```nix
-     sortOn f == sort (p: q: f p < f q)
-     ```
+    **Laws**:
+    ```nix
+    sortOn f == sort (p: q: f p < f q)
+    ```
 
-     # Inputs
+    # Inputs
 
-     `f`
+    `f`
 
-     : 1\. Function argument
+    : 1\. Function argument
 
-     `list`
+    `list`
 
-     : 2\. Function argument
+    : 2\. Function argument
 
-     # Type
+    # Type
 
-     ```
-     sortOn :: (a -> b) -> [a] -> [a], for comparable b
-     ```
+    ```
+    sortOn :: (a -> b) -> [a] -> [a], for comparable b
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.sortOn` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.sortOn` usage example
 
-     ```nix
-     sortOn stringLength [ "aa" "b" "cccc" ]
-     => [ "b" "aa" "cccc" ]
-     ```
+    ```nix
+    sortOn stringLength [ "aa" "b" "cccc" ]
+    => [ "b" "aa" "cccc" ]
+    ```
 
-     :::
+    :::
   */
-  sortOn = f: list:
+  sortOn =
+    f: list:
     let
       # Heterogenous list as pair may be ugly, but requires minimal allocations.
-      pairs = map (x: [ (f x) x ]) list;
-    in map (x: builtins.elemAt x 1) (sort
-      # Compare the first element of the pairs
-      # Do not factor out the `<`, to avoid calls in hot code; duplicate instead.
-      (a: b: head a < head b) pairs);
+      pairs = map (x: [
+        (f x)
+        x
+      ]) list;
+    in
+    map (x: builtins.elemAt x 1) (
+      sort
+        # Compare the first element of the pairs
+        # Do not factor out the `<`, to avoid calls in hot code; duplicate instead.
+        (a: b: head a < head b)
+        pairs
+    );
 
-  /* *
-     Compare two lists element-by-element.
+  /*
+    *
+    Compare two lists element-by-element.
 
-     # Inputs
+    # Inputs
 
-     `cmp`
+    `cmp`
 
-     : 1\. Function argument
+    : 1\. Function argument
 
-     `a`
+    `a`
 
-     : 2\. Function argument
+    : 2\. Function argument
 
-     `b`
+    `b`
 
-     : 3\. Function argument
+    : 3\. Function argument
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.compareLists` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.compareLists` usage example
 
-     ```nix
-     compareLists compare [] []
-     => 0
-     compareLists compare [] [ "a" ]
-     => -1
-     compareLists compare [ "a" ] []
-     => 1
-     compareLists compare [ "a" "b" ] [ "a" "c" ]
-     => -1
-     ```
+    ```nix
+    compareLists compare [] []
+    => 0
+    compareLists compare [] [ "a" ]
+    => -1
+    compareLists compare [ "a" ] []
+    => 1
+    compareLists compare [ "a" "b" ] [ "a" "c" ]
+    => -1
+    ```
 
-     :::
+    :::
   */
-  compareLists = cmp: a: b:
+  compareLists =
+    cmp: a: b:
     if a == [ ] then
       if b == [ ] then 0 else -1
     else if b == [ ] then
       1
     else
-      let rel = cmp (head a) (head b);
-      in if rel == 0 then compareLists cmp (tail a) (tail b) else rel;
+      let
+        rel = cmp (head a) (head b);
+      in
+      if rel == 0 then compareLists cmp (tail a) (tail b) else rel;
 
-  /* *
-     Sort list using "Natural sorting".
-     Numeric portions of strings are sorted in numeric order.
+  /*
+    *
+    Sort list using "Natural sorting".
+    Numeric portions of strings are sorted in numeric order.
 
-     # Inputs
+    # Inputs
 
-     `lst`
+    `lst`
 
-     : 1\. Function argument
+    : 1\. Function argument
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.naturalSort` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.naturalSort` usage example
 
-     ```nix
-     naturalSort ["disk11" "disk8" "disk100" "disk9"]
-     => ["disk8" "disk9" "disk11" "disk100"]
-     naturalSort ["10.46.133.149" "10.5.16.62" "10.54.16.25"]
-     => ["10.5.16.62" "10.46.133.149" "10.54.16.25"]
-     naturalSort ["v0.2" "v0.15" "v0.0.9"]
-     => [ "v0.0.9" "v0.2" "v0.15" ]
-     ```
+    ```nix
+    naturalSort ["disk11" "disk8" "disk100" "disk9"]
+    => ["disk8" "disk9" "disk11" "disk100"]
+    naturalSort ["10.46.133.149" "10.5.16.62" "10.54.16.25"]
+    => ["10.5.16.62" "10.46.133.149" "10.54.16.25"]
+    naturalSort ["v0.2" "v0.15" "v0.0.9"]
+    => [ "v0.0.9" "v0.2" "v0.15" ]
+    ```
 
-     :::
+    :::
   */
-  naturalSort = lst:
+  naturalSort =
+    lst:
     let
-      vectorise = s:
-        map (x: if isList x then toInt (head x) else x)
-        (builtins.split "(0|[1-9][0-9]*)" s);
-      prepared = map (x: [ (vectorise x) x ])
-        lst; # remember vectorised version for O(n) regex splits
+      vectorise = s: map (x: if isList x then toInt (head x) else x) (builtins.split "(0|[1-9][0-9]*)" s);
+      prepared = map (x: [
+        (vectorise x)
+        x
+      ]) lst; # remember vectorised version for O(n) regex splits
       less = a: b: (compareLists compare (head a) (head b)) < 0;
-    in map (x: elemAt x 1) (sort less prepared);
+    in
+    map (x: elemAt x 1) (sort less prepared);
 
-  /* *
-     Return the first (at most) N elements of a list.
+  /*
+    *
+    Return the first (at most) N elements of a list.
 
-     # Inputs
+    # Inputs
 
-     `count`
+    `count`
 
-     : Number of elements to take
+    : Number of elements to take
 
-     `list`
+    `list`
 
-     : Input list
+    : Input list
 
-     # Type
+    # Type
 
-     ```
-     take :: int -> [a] -> [a]
-     ```
+    ```
+    take :: int -> [a] -> [a]
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.take` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.take` usage example
 
-     ```nix
-     take 2 [ "a" "b" "c" "d" ]
-     => [ "a" "b" ]
-     take 2 [ ]
-     => [ ]
-     ```
+    ```nix
+    take 2 [ "a" "b" "c" "d" ]
+    => [ "a" "b" ]
+    take 2 [ ]
+    => [ ]
+    ```
 
-     :::
+    :::
   */
   take = count: sublist 0 count;
 
-  /* *
-     Remove the first (at most) N elements of a list.
+  /*
+    *
+    Remove the first (at most) N elements of a list.
 
-     # Inputs
+    # Inputs
 
-     `count`
+    `count`
 
-     : Number of elements to drop
+    : Number of elements to drop
 
-     `list`
+    `list`
 
-     : Input list
+    : Input list
 
-     # Type
+    # Type
 
-     ```
-     drop :: int -> [a] -> [a]
-     ```
+    ```
+    drop :: int -> [a] -> [a]
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.drop` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.drop` usage example
 
-     ```nix
-     drop 2 [ "a" "b" "c" "d" ]
-     => [ "c" "d" ]
-     drop 2 [ ]
-     => [ ]
-     ```
+    ```nix
+    drop 2 [ "a" "b" "c" "d" ]
+    => [ "c" "d" ]
+    drop 2 [ ]
+    => [ ]
+    ```
 
-     :::
+    :::
   */
   drop = count: list: sublist count (length list) list;
 
-  /* *
-     Whether the first list is a prefix of the second list.
+  /*
+    *
+    Whether the first list is a prefix of the second list.
 
-     # Inputs
+    # Inputs
 
-     `list1`
+    `list1`
 
-     : 1\. Function argument
+    : 1\. Function argument
 
-     `list2`
+    `list2`
 
-     : 2\. Function argument
+    : 2\. Function argument
 
-     # Type
+    # Type
 
-     ```
-     hasPrefix :: [a] -> [a] -> bool
-     ```
+    ```
+    hasPrefix :: [a] -> [a] -> bool
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.hasPrefix` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.hasPrefix` usage example
 
-     ```nix
-     hasPrefix [ 1 2 ] [ 1 2 3 4 ]
-     => true
-     hasPrefix [ 0 1 ] [ 1 2 3 4 ]
-     => false
-     ```
+    ```nix
+    hasPrefix [ 1 2 ] [ 1 2 3 4 ]
+    => true
+    hasPrefix [ 0 1 ] [ 1 2 3 4 ]
+    => false
+    ```
 
-     :::
+    :::
   */
   hasPrefix = list1: list2: take (length list1) list2 == list1;
 
-  /* *
-     Remove the first list as a prefix from the second list.
-     Error if the first list isn't a prefix of the second list.
+  /*
+    *
+    Remove the first list as a prefix from the second list.
+    Error if the first list isn't a prefix of the second list.
 
-     # Inputs
+    # Inputs
 
-     `list1`
+    `list1`
 
-     : 1\. Function argument
+    : 1\. Function argument
 
-     `list2`
+    `list2`
 
-     : 2\. Function argument
+    : 2\. Function argument
 
-     # Type
+    # Type
 
-     ```
-     removePrefix :: [a] -> [a] -> [a]
-     ```
+    ```
+    removePrefix :: [a] -> [a] -> [a]
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.removePrefix` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.removePrefix` usage example
 
-     ```nix
-     removePrefix [ 1 2 ] [ 1 2 3 4 ]
-     => [ 3 4 ]
-     removePrefix [ 0 1 ] [ 1 2 3 4 ]
-     => <error>
-     ```
+    ```nix
+    removePrefix [ 1 2 ] [ 1 2 3 4 ]
+    => [ 3 4 ]
+    removePrefix [ 0 1 ] [ 1 2 3 4 ]
+    => <error>
+    ```
 
-     :::
+    :::
   */
-  removePrefix = list1: list2:
+  removePrefix =
+    list1: list2:
     if hasPrefix list1 list2 then
       drop (length list1) list2
     else
-      throw
-      "lib.lists.removePrefix: First argument is not a list prefix of the second argument";
+      throw "lib.lists.removePrefix: First argument is not a list prefix of the second argument";
 
-  /* *
-     Return a list consisting of at most `count` elements of `list`,
-     starting at index `start`.
+  /*
+    *
+    Return a list consisting of at most `count` elements of `list`,
+    starting at index `start`.
 
-     # Inputs
+    # Inputs
 
-     `start`
+    `start`
 
-     : Index at which to start the sublist
+    : Index at which to start the sublist
 
-     `count`
+    `count`
 
-     : Number of elements to take
+    : Number of elements to take
 
-     `list`
+    `list`
 
-     : Input list
+    : Input list
 
-     # Type
+    # Type
 
-     ```
-     sublist :: int -> int -> [a] -> [a]
-     ```
+    ```
+    sublist :: int -> int -> [a] -> [a]
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.sublist` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.sublist` usage example
 
-     ```nix
-     sublist 1 3 [ "a" "b" "c" "d" "e" ]
-     => [ "b" "c" "d" ]
-     sublist 1 3 [ ]
-     => [ ]
-     ```
+    ```nix
+    sublist 1 3 [ "a" "b" "c" "d" "e" ]
+    => [ "b" "c" "d" ]
+    sublist 1 3 [ ]
+    => [ ]
+    ```
 
-     :::
+    :::
   */
-  sublist = start: count: list:
-    let len = length list;
-    in genList (n: elemAt list (n + start)) (if start >= len then
-      0
-    else if start + count > len then
-      len - start
-    else
-      count);
+  sublist =
+    start: count: list:
+    let
+      len = length list;
+    in
+    genList (n: elemAt list (n + start)) (
+      if start >= len then
+        0
+      else if start + count > len then
+        len - start
+      else
+        count
+    );
 
-  /* *
-     The common prefix of two lists.
+  /*
+    *
+    The common prefix of two lists.
 
-     # Inputs
+    # Inputs
 
-     `list1`
+    `list1`
 
-     : 1\. Function argument
+    : 1\. Function argument
 
-     `list2`
+    `list2`
 
-     : 2\. Function argument
+    : 2\. Function argument
 
-     # Type
+    # Type
 
-     ```
-     commonPrefix :: [a] -> [a] -> [a]
-     ```
+    ```
+    commonPrefix :: [a] -> [a] -> [a]
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.commonPrefix` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.commonPrefix` usage example
 
-     ```nix
-     commonPrefix [ 1 2 3 4 5 6 ] [ 1 2 4 8 ]
-     => [ 1 2 ]
-     commonPrefix [ 1 2 3 ] [ 1 2 3 4 5 ]
-     => [ 1 2 3 ]
-     commonPrefix [ 1 2 3 ] [ 4 5 6 ]
-     => [ ]
-     ```
+    ```nix
+    commonPrefix [ 1 2 3 4 5 6 ] [ 1 2 4 8 ]
+    => [ 1 2 ]
+    commonPrefix [ 1 2 3 ] [ 1 2 3 4 5 ]
+    => [ 1 2 3 ]
+    commonPrefix [ 1 2 3 ] [ 4 5 6 ]
+    => [ ]
+    ```
 
-     :::
+    :::
   */
-  commonPrefix = list1: list2:
+  commonPrefix =
+    list1: list2:
     let
       # Zip the lists together into a list of booleans whether each element matches
       matchings = zipListsWith (fst: snd: fst != snd) list1 list2;
@@ -1569,91 +1686,97 @@ in rec {
       # If all elements match, we fall back to the length of the zipped list,
       # which is the same as the length of the smaller list.
       commonPrefixLength = findFirstIndex id (length matchings) matchings;
-    in take commonPrefixLength list1;
+    in
+    take commonPrefixLength list1;
 
-  /* *
-     Return the last element of a list.
+  /*
+    *
+    Return the last element of a list.
 
-     This function throws an error if the list is empty.
+    This function throws an error if the list is empty.
 
-     # Inputs
+    # Inputs
 
-     `list`
+    `list`
 
-     : 1\. Function argument
+    : 1\. Function argument
 
-     # Type
+    # Type
 
-     ```
-     last :: [a] -> a
-     ```
+    ```
+    last :: [a] -> a
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.last` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.last` usage example
 
-     ```nix
-     last [ 1 2 3 ]
-     => 3
-     ```
+    ```nix
+    last [ 1 2 3 ]
+    => 3
+    ```
 
-     :::
+    :::
   */
-  last = list:
+  last =
+    list:
     assert lib.assertMsg (list != [ ]) "lists.last: list must not be empty!";
     elemAt list (length list - 1);
 
-  /* *
-     Return all elements but the last.
+  /*
+    *
+    Return all elements but the last.
 
-     This function throws an error if the list is empty.
+    This function throws an error if the list is empty.
 
-     # Inputs
+    # Inputs
 
-     `list`
+    `list`
 
-     : 1\. Function argument
+    : 1\. Function argument
 
-     # Type
+    # Type
 
-     ```
-     init :: [a] -> [a]
-     ```
+    ```
+    init :: [a] -> [a]
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.init` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.init` usage example
 
-     ```nix
-     init [ 1 2 3 ]
-     => [ 1 2 ]
-     ```
+    ```nix
+    init [ 1 2 3 ]
+    => [ 1 2 ]
+    ```
 
-     :::
+    :::
   */
-  init = list:
+  init =
+    list:
     assert lib.assertMsg (list != [ ]) "lists.init: list must not be empty!";
     take (length list - 1) list;
 
-  /* *
-     Return the image of the cross product of some lists by a function.
+  /*
+    *
+    Return the image of the cross product of some lists by a function.
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.crossLists` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.crossLists` usage example
 
-     ```nix
-     crossLists (x: y: "${toString x}${toString y}") [[1 2] [3 4]]
-     => [ "13" "14" "23" "24" ]
-     ```
+    ```nix
+    crossLists (x: y: "${toString x}${toString y}") [[1 2] [3 4]]
+    => [ "13" "14" "23" "24" ]
+    ```
 
-     The following function call is equivalent to the one deprecated above:
+    The following function call is equivalent to the one deprecated above:
 
-     ```nix
-     mapCartesianProduct (x: "${toString x.a}${toString x.b}") { a = [1 2]; b = [3 4]; }
-     => [ "13" "14" "23" "24" ]
-     ```
-     :::
+    ```nix
+    mapCartesianProduct (x: "${toString x.a}${toString x.b}") { a = [1 2]; b = [3 4]; }
+    => [ "13" "14" "23" "24" ]
+    ```
+    :::
   */
   crossLists = warn ''
     lib.crossLists is deprecated, use lib.mapCartesianProduct instead.
@@ -1669,133 +1792,138 @@ in rec {
         [ 4 5 5 6 ]
   '' (f: foldl (fs: args: concatMap (f: map f args) fs) [ f ]);
 
-  /* *
-     Remove duplicate elements from the `list`. O(n^2) complexity.
+  /*
+    *
+    Remove duplicate elements from the `list`. O(n^2) complexity.
 
-     # Inputs
+    # Inputs
 
-     `list`
+    `list`
 
-     : Input list
+    : Input list
 
-     # Type
+    # Type
 
-     ```
-     unique :: [a] -> [a]
-     ```
+    ```
+    unique :: [a] -> [a]
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.unique` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.unique` usage example
 
-     ```nix
-     unique [ 3 2 3 4 ]
-     => [ 3 2 4 ]
-     ```
+    ```nix
+    unique [ 3 2 3 4 ]
+    => [ 3 2 4 ]
+    ```
 
-     :::
+    :::
   */
   unique = foldl' (acc: e: if elem e acc then acc else acc ++ [ e ]) [ ];
 
-  /* *
-     Check if list contains only unique elements. O(n^2) complexity.
+  /*
+    *
+    Check if list contains only unique elements. O(n^2) complexity.
 
-     # Inputs
+    # Inputs
 
-     `list`
+    `list`
 
-     : 1\. Function argument
+    : 1\. Function argument
 
-     # Type
+    # Type
 
-     ```
-     allUnique :: [a] -> bool
-     ```
+    ```
+    allUnique :: [a] -> bool
+    ```
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.allUnique` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.allUnique` usage example
 
-     ```nix
-     allUnique [ 3 2 3 4 ]
-     => false
-     allUnique [ 3 2 4 1 ]
-     => true
-     ```
+    ```nix
+    allUnique [ 3 2 3 4 ]
+    => false
+    allUnique [ 3 2 4 1 ]
+    => true
+    ```
 
-     :::
+    :::
   */
   allUnique = list: (length (unique list) == length list);
 
-  /* *
-     Intersects list 'list1' and another list (`list2`).
+  /*
+    *
+    Intersects list 'list1' and another list (`list2`).
 
-     O(nm) complexity.
+    O(nm) complexity.
 
-     # Inputs
+    # Inputs
 
-     `list1`
+    `list1`
 
-     : First list
+    : First list
 
-     `list2`
+    `list2`
 
-     : Second list
+    : Second list
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.intersectLists` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.intersectLists` usage example
 
-     ```nix
-     intersectLists [ 1 2 3 ] [ 6 3 2 ]
-     => [ 3 2 ]
-     ```
+    ```nix
+    intersectLists [ 1 2 3 ] [ 6 3 2 ]
+    => [ 3 2 ]
+    ```
 
-     :::
+    :::
   */
   intersectLists = e: filter (x: elem x e);
 
-  /* *
-     Subtracts list 'e' from another list (`list2`).
+  /*
+    *
+    Subtracts list 'e' from another list (`list2`).
 
-     O(nm) complexity.
+    O(nm) complexity.
 
-     # Inputs
+    # Inputs
 
-     `e`
+    `e`
 
-     : First list
+    : First list
 
-     `list2`
+    `list2`
 
-     : Second list
+    : Second list
 
-     # Examples
-     :::{.example}
-     ## `lib.lists.subtractLists` usage example
+    # Examples
+    :::{.example}
+    ## `lib.lists.subtractLists` usage example
 
-     ```nix
-     subtractLists [ 3 2 ] [ 1 2 3 4 5 3 ]
-     => [ 1 4 5 ]
-     ```
+    ```nix
+    subtractLists [ 3 2 ] [ 1 2 3 4 5 3 ]
+    => [ 1 4 5 ]
+    ```
 
-     :::
+    :::
   */
   subtractLists = e: filter (x: !(elem x e));
 
-  /* *
-     Test if two lists have no common element.
-     It should be slightly more efficient than (intersectLists a b == [])
+  /*
+    *
+    Test if two lists have no common element.
+    It should be slightly more efficient than (intersectLists a b == [])
 
-     # Inputs
+    # Inputs
 
-     `a`
+    `a`
 
-     : 1\. Function argument
+    : 1\. Function argument
 
-     `b`
+    `b`
 
-     : 2\. Function argument
+    : 2\. Function argument
   */
   mutuallyExclusive = a: b: length a == 0 || !(any (x: elem x a) b);
 }

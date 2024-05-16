@@ -17,29 +17,62 @@
 { lib }:
 let
   inherit (lib)
-    all any attrValues elem elemAt hasPrefix id length mapAttrs mergeOneOption
-    optionalString splitString versionAtLeast;
+    all
+    any
+    attrValues
+    elem
+    elemAt
+    hasPrefix
+    id
+    length
+    mapAttrs
+    mergeOneOption
+    optionalString
+    splitString
+    versionAtLeast
+    ;
 
   inherit (lib.strings) match;
 
   inherit (lib.systems.inspect.predicates)
-    isAarch32 isBigEndian isDarwin isLinux isPower64 isWindows;
+    isAarch32
+    isBigEndian
+    isDarwin
+    isLinux
+    isPower64
+    isWindows
+    ;
 
   inherit (lib.types)
-    enum float isType mkOptionType number setType string types;
+    enum
+    float
+    isType
+    mkOptionType
+    number
+    setType
+    string
+    types
+    ;
 
-  setTypes = type:
-    mapAttrs (name: value:
+  setTypes =
+    type:
+    mapAttrs (
+      name: value:
       assert type.check value;
-      setType type.name ({ inherit name; } // value));
+      setType type.name ({ inherit name; } // value)
+    );
 
   # gnu-config will ignore the portion of a triple matching the
   # regex `e?abi.*$` when determining the validity of a triple.  In
   # other words, `i386-linuxabichickenlips` is a valid triple.
-  removeAbiSuffix = x:
-    let found = match "(.*)e?abi.*" x;
-    in if found == null then x else elemAt found 0;
-in rec {
+  removeAbiSuffix =
+    x:
+    let
+      found = match "(.*)e?abi.*" x;
+    in
+    if found == null then x else elemAt found 0;
+in
+rec {
   ################################################################################
 
   types.openSignificantByte = mkOptionType {
@@ -58,7 +91,13 @@ in rec {
   ################################################################################
 
   # Reasonable power of 2
-  types.bitWidth = enum [ 8 16 32 64 128 ];
+  types.bitWidth = enum [
+    8
+    16
+    32
+    64
+    128
+  ];
 
   ################################################################################
 
@@ -66,299 +105,304 @@ in rec {
     name = "cpu-type";
     description = "instruction set architecture name and information";
     merge = mergeOneOption;
-    check = x:
-      types.bitWidth.check x.bits && (if 8 < x.bits then
-        types.significantByte.check x.significantByte
-      else
-        !(x ? significantByte));
+    check =
+      x:
+      types.bitWidth.check x.bits
+      && (if 8 < x.bits then types.significantByte.check x.significantByte else !(x ? significantByte));
   };
 
   types.cpuType = enum (attrValues cpuTypes);
 
-  cpuTypes = let inherit (significantBytes) bigEndian littleEndian;
-  in setTypes types.openCpuType {
-    arm = {
-      bits = 32;
-      significantByte = littleEndian;
-      family = "arm";
-    };
-    armv5tel = {
-      bits = 32;
-      significantByte = littleEndian;
-      family = "arm";
-      version = "5";
-      arch = "armv5t";
-    };
-    armv6m = {
-      bits = 32;
-      significantByte = littleEndian;
-      family = "arm";
-      version = "6";
-      arch = "armv6-m";
-    };
-    armv6l = {
-      bits = 32;
-      significantByte = littleEndian;
-      family = "arm";
-      version = "6";
-      arch = "armv6";
-    };
-    armv7a = {
-      bits = 32;
-      significantByte = littleEndian;
-      family = "arm";
-      version = "7";
-      arch = "armv7-a";
-    };
-    armv7r = {
-      bits = 32;
-      significantByte = littleEndian;
-      family = "arm";
-      version = "7";
-      arch = "armv7-r";
-    };
-    armv7m = {
-      bits = 32;
-      significantByte = littleEndian;
-      family = "arm";
-      version = "7";
-      arch = "armv7-m";
-    };
-    armv7l = {
-      bits = 32;
-      significantByte = littleEndian;
-      family = "arm";
-      version = "7";
-      arch = "armv7";
-    };
-    armv8a = {
-      bits = 32;
-      significantByte = littleEndian;
-      family = "arm";
-      version = "8";
-      arch = "armv8-a";
-    };
-    armv8r = {
-      bits = 32;
-      significantByte = littleEndian;
-      family = "arm";
-      version = "8";
-      arch = "armv8-a";
-    };
-    armv8m = {
-      bits = 32;
-      significantByte = littleEndian;
-      family = "arm";
-      version = "8";
-      arch = "armv8-m";
-    };
-    aarch64 = {
-      bits = 64;
-      significantByte = littleEndian;
-      family = "arm";
-      version = "8";
-      arch = "armv8-a";
-    };
-    aarch64_be = {
-      bits = 64;
-      significantByte = bigEndian;
-      family = "arm";
-      version = "8";
-      arch = "armv8-a";
-    };
+  cpuTypes =
+    let
+      inherit (significantBytes) bigEndian littleEndian;
+    in
+    setTypes types.openCpuType {
+      arm = {
+        bits = 32;
+        significantByte = littleEndian;
+        family = "arm";
+      };
+      armv5tel = {
+        bits = 32;
+        significantByte = littleEndian;
+        family = "arm";
+        version = "5";
+        arch = "armv5t";
+      };
+      armv6m = {
+        bits = 32;
+        significantByte = littleEndian;
+        family = "arm";
+        version = "6";
+        arch = "armv6-m";
+      };
+      armv6l = {
+        bits = 32;
+        significantByte = littleEndian;
+        family = "arm";
+        version = "6";
+        arch = "armv6";
+      };
+      armv7a = {
+        bits = 32;
+        significantByte = littleEndian;
+        family = "arm";
+        version = "7";
+        arch = "armv7-a";
+      };
+      armv7r = {
+        bits = 32;
+        significantByte = littleEndian;
+        family = "arm";
+        version = "7";
+        arch = "armv7-r";
+      };
+      armv7m = {
+        bits = 32;
+        significantByte = littleEndian;
+        family = "arm";
+        version = "7";
+        arch = "armv7-m";
+      };
+      armv7l = {
+        bits = 32;
+        significantByte = littleEndian;
+        family = "arm";
+        version = "7";
+        arch = "armv7";
+      };
+      armv8a = {
+        bits = 32;
+        significantByte = littleEndian;
+        family = "arm";
+        version = "8";
+        arch = "armv8-a";
+      };
+      armv8r = {
+        bits = 32;
+        significantByte = littleEndian;
+        family = "arm";
+        version = "8";
+        arch = "armv8-a";
+      };
+      armv8m = {
+        bits = 32;
+        significantByte = littleEndian;
+        family = "arm";
+        version = "8";
+        arch = "armv8-m";
+      };
+      aarch64 = {
+        bits = 64;
+        significantByte = littleEndian;
+        family = "arm";
+        version = "8";
+        arch = "armv8-a";
+      };
+      aarch64_be = {
+        bits = 64;
+        significantByte = bigEndian;
+        family = "arm";
+        version = "8";
+        arch = "armv8-a";
+      };
 
-    i386 = {
-      bits = 32;
-      significantByte = littleEndian;
-      family = "x86";
-      arch = "i386";
-    };
-    i486 = {
-      bits = 32;
-      significantByte = littleEndian;
-      family = "x86";
-      arch = "i486";
-    };
-    i586 = {
-      bits = 32;
-      significantByte = littleEndian;
-      family = "x86";
-      arch = "i586";
-    };
-    i686 = {
-      bits = 32;
-      significantByte = littleEndian;
-      family = "x86";
-      arch = "i686";
-    };
-    x86_64 = {
-      bits = 64;
-      significantByte = littleEndian;
-      family = "x86";
-      arch = "x86-64";
-    };
+      i386 = {
+        bits = 32;
+        significantByte = littleEndian;
+        family = "x86";
+        arch = "i386";
+      };
+      i486 = {
+        bits = 32;
+        significantByte = littleEndian;
+        family = "x86";
+        arch = "i486";
+      };
+      i586 = {
+        bits = 32;
+        significantByte = littleEndian;
+        family = "x86";
+        arch = "i586";
+      };
+      i686 = {
+        bits = 32;
+        significantByte = littleEndian;
+        family = "x86";
+        arch = "i686";
+      };
+      x86_64 = {
+        bits = 64;
+        significantByte = littleEndian;
+        family = "x86";
+        arch = "x86-64";
+      };
 
-    microblaze = {
-      bits = 32;
-      significantByte = bigEndian;
-      family = "microblaze";
-    };
-    microblazeel = {
-      bits = 32;
-      significantByte = littleEndian;
-      family = "microblaze";
-    };
+      microblaze = {
+        bits = 32;
+        significantByte = bigEndian;
+        family = "microblaze";
+      };
+      microblazeel = {
+        bits = 32;
+        significantByte = littleEndian;
+        family = "microblaze";
+      };
 
-    mips = {
-      bits = 32;
-      significantByte = bigEndian;
-      family = "mips";
-    };
-    mipsel = {
-      bits = 32;
-      significantByte = littleEndian;
-      family = "mips";
-    };
-    mips64 = {
-      bits = 64;
-      significantByte = bigEndian;
-      family = "mips";
-    };
-    mips64el = {
-      bits = 64;
-      significantByte = littleEndian;
-      family = "mips";
-    };
+      mips = {
+        bits = 32;
+        significantByte = bigEndian;
+        family = "mips";
+      };
+      mipsel = {
+        bits = 32;
+        significantByte = littleEndian;
+        family = "mips";
+      };
+      mips64 = {
+        bits = 64;
+        significantByte = bigEndian;
+        family = "mips";
+      };
+      mips64el = {
+        bits = 64;
+        significantByte = littleEndian;
+        family = "mips";
+      };
 
-    mmix = {
-      bits = 64;
-      significantByte = bigEndian;
-      family = "mmix";
-    };
+      mmix = {
+        bits = 64;
+        significantByte = bigEndian;
+        family = "mmix";
+      };
 
-    m68k = {
-      bits = 32;
-      significantByte = bigEndian;
-      family = "m68k";
-    };
+      m68k = {
+        bits = 32;
+        significantByte = bigEndian;
+        family = "m68k";
+      };
 
-    powerpc = {
-      bits = 32;
-      significantByte = bigEndian;
-      family = "power";
-    };
-    powerpc64 = {
-      bits = 64;
-      significantByte = bigEndian;
-      family = "power";
-    };
-    powerpc64le = {
-      bits = 64;
-      significantByte = littleEndian;
-      family = "power";
-    };
-    powerpcle = {
-      bits = 32;
-      significantByte = littleEndian;
-      family = "power";
-    };
+      powerpc = {
+        bits = 32;
+        significantByte = bigEndian;
+        family = "power";
+      };
+      powerpc64 = {
+        bits = 64;
+        significantByte = bigEndian;
+        family = "power";
+      };
+      powerpc64le = {
+        bits = 64;
+        significantByte = littleEndian;
+        family = "power";
+      };
+      powerpcle = {
+        bits = 32;
+        significantByte = littleEndian;
+        family = "power";
+      };
 
-    riscv32 = {
-      bits = 32;
-      significantByte = littleEndian;
-      family = "riscv";
-    };
-    riscv64 = {
-      bits = 64;
-      significantByte = littleEndian;
-      family = "riscv";
-    };
+      riscv32 = {
+        bits = 32;
+        significantByte = littleEndian;
+        family = "riscv";
+      };
+      riscv64 = {
+        bits = 64;
+        significantByte = littleEndian;
+        family = "riscv";
+      };
 
-    s390 = {
-      bits = 32;
-      significantByte = bigEndian;
-      family = "s390";
-    };
-    s390x = {
-      bits = 64;
-      significantByte = bigEndian;
-      family = "s390";
-    };
+      s390 = {
+        bits = 32;
+        significantByte = bigEndian;
+        family = "s390";
+      };
+      s390x = {
+        bits = 64;
+        significantByte = bigEndian;
+        family = "s390";
+      };
 
-    sparc = {
-      bits = 32;
-      significantByte = bigEndian;
-      family = "sparc";
-    };
-    sparc64 = {
-      bits = 64;
-      significantByte = bigEndian;
-      family = "sparc";
-    };
+      sparc = {
+        bits = 32;
+        significantByte = bigEndian;
+        family = "sparc";
+      };
+      sparc64 = {
+        bits = 64;
+        significantByte = bigEndian;
+        family = "sparc";
+      };
 
-    wasm32 = {
-      bits = 32;
-      significantByte = littleEndian;
-      family = "wasm";
-    };
-    wasm64 = {
-      bits = 64;
-      significantByte = littleEndian;
-      family = "wasm";
-    };
+      wasm32 = {
+        bits = 32;
+        significantByte = littleEndian;
+        family = "wasm";
+      };
+      wasm64 = {
+        bits = 64;
+        significantByte = littleEndian;
+        family = "wasm";
+      };
 
-    alpha = {
-      bits = 64;
-      significantByte = littleEndian;
-      family = "alpha";
-    };
+      alpha = {
+        bits = 64;
+        significantByte = littleEndian;
+        family = "alpha";
+      };
 
-    rx = {
-      bits = 32;
-      significantByte = littleEndian;
-      family = "rx";
-    };
-    msp430 = {
-      bits = 16;
-      significantByte = littleEndian;
-      family = "msp430";
-    };
-    avr = {
-      bits = 8;
-      family = "avr";
-    };
+      rx = {
+        bits = 32;
+        significantByte = littleEndian;
+        family = "rx";
+      };
+      msp430 = {
+        bits = 16;
+        significantByte = littleEndian;
+        family = "msp430";
+      };
+      avr = {
+        bits = 8;
+        family = "avr";
+      };
 
-    vc4 = {
-      bits = 32;
-      significantByte = littleEndian;
-      family = "vc4";
-    };
+      vc4 = {
+        bits = 32;
+        significantByte = littleEndian;
+        family = "vc4";
+      };
 
-    or1k = {
-      bits = 32;
-      significantByte = bigEndian;
-      family = "or1k";
-    };
+      or1k = {
+        bits = 32;
+        significantByte = bigEndian;
+        family = "or1k";
+      };
 
-    loongarch64 = {
-      bits = 64;
-      significantByte = littleEndian;
-      family = "loongarch";
-    };
+      loongarch64 = {
+        bits = 64;
+        significantByte = littleEndian;
+        family = "loongarch";
+      };
 
-    javascript = {
-      bits = 32;
-      significantByte = littleEndian;
-      family = "javascript";
+      javascript = {
+        bits = 32;
+        significantByte = littleEndian;
+        family = "javascript";
+      };
     };
-  };
 
   # GNU build systems assume that older NetBSD architectures are using a.out.
-  gnuNetBSDDefaultExecFormat = cpu:
-    if (cpu.family == "arm" && cpu.bits == 32)
-    || (cpu.family == "sparc" && cpu.bits == 32)
-    || (cpu.family == "m68k" && cpu.bits == 32)
-    || (cpu.family == "x86" && cpu.bits == 32) then
+  gnuNetBSDDefaultExecFormat =
+    cpu:
+    if
+      (cpu.family == "arm" && cpu.bits == 32)
+      || (cpu.family == "sparc" && cpu.bits == 32)
+      || (cpu.family == "m68k" && cpu.bits == 32)
+      || (cpu.family == "x86" && cpu.bits == 32)
+    then
       execFormats.aout
     else
       execFormats.elf;
@@ -379,7 +423,8 @@ in rec {
   # Note: Since 22.11 the archs of a mode switching CPU are no longer considered
   # pairwise compatible. Mode switching implies that binaries built for A
   # and B respectively can't be executed at the same time.
-  isCompatible = with cpuTypes;
+  isCompatible =
+    with cpuTypes;
     a: b:
     any id [
       # x86
@@ -496,95 +541,115 @@ in rec {
     name = "kernel";
     description = "kernel name and information";
     merge = mergeOneOption;
-    check = x:
-      types.execFormat.check x.execFormat
-      && all types.kernelFamily.check (attrValues x.families);
+    check =
+      x: types.execFormat.check x.execFormat && all types.kernelFamily.check (attrValues x.families);
   };
 
   types.kernel = enum (attrValues kernels);
 
-  kernels = let
-    inherit (execFormats) elf pe wasm unknown macho;
-    inherit (kernelFamilies) bsd darwin;
-  in setTypes types.openKernel {
-    # TODO(@Ericson2314): Don't want to mass-rebuild yet to keeping 'darwin' as
-    # the normalized name for macOS.
-    macos = {
-      execFormat = macho;
-      families = { inherit darwin; };
-      name = "darwin";
+  kernels =
+    let
+      inherit (execFormats)
+        elf
+        pe
+        wasm
+        unknown
+        macho
+        ;
+      inherit (kernelFamilies) bsd darwin;
+    in
+    setTypes types.openKernel {
+      # TODO(@Ericson2314): Don't want to mass-rebuild yet to keeping 'darwin' as
+      # the normalized name for macOS.
+      macos = {
+        execFormat = macho;
+        families = {
+          inherit darwin;
+        };
+        name = "darwin";
+      };
+      ios = {
+        execFormat = macho;
+        families = {
+          inherit darwin;
+        };
+      };
+      # A tricky thing about FreeBSD is that there is no stable ABI across
+      # versions. That means that putting in the version as part of the
+      # config string is paramount.
+      freebsd12 = {
+        execFormat = elf;
+        families = {
+          inherit bsd;
+        };
+        name = "freebsd";
+        version = 12;
+      };
+      freebsd13 = {
+        execFormat = elf;
+        families = {
+          inherit bsd;
+        };
+        name = "freebsd";
+        version = 13;
+      };
+      linux = {
+        execFormat = elf;
+        families = { };
+      };
+      netbsd = {
+        execFormat = elf;
+        families = {
+          inherit bsd;
+        };
+      };
+      none = {
+        execFormat = unknown;
+        families = { };
+      };
+      openbsd = {
+        execFormat = elf;
+        families = {
+          inherit bsd;
+        };
+      };
+      solaris = {
+        execFormat = elf;
+        families = { };
+      };
+      wasi = {
+        execFormat = wasm;
+        families = { };
+      };
+      redox = {
+        execFormat = elf;
+        families = { };
+      };
+      windows = {
+        execFormat = pe;
+        families = { };
+      };
+      ghcjs = {
+        execFormat = unknown;
+        families = { };
+      };
+      genode = {
+        execFormat = elf;
+        families = { };
+      };
+      mmixware = {
+        execFormat = unknown;
+        families = { };
+      };
+    }
+    // {
+      # aliases
+      # 'darwin' is the kernel for all of them. We choose macOS by default.
+      darwin = kernels.macos;
+      watchos = kernels.ios;
+      tvos = kernels.ios;
+      win32 = kernels.windows;
     };
-    ios = {
-      execFormat = macho;
-      families = { inherit darwin; };
-    };
-    # A tricky thing about FreeBSD is that there is no stable ABI across
-    # versions. That means that putting in the version as part of the
-    # config string is paramount.
-    freebsd12 = {
-      execFormat = elf;
-      families = { inherit bsd; };
-      name = "freebsd";
-      version = 12;
-    };
-    freebsd13 = {
-      execFormat = elf;
-      families = { inherit bsd; };
-      name = "freebsd";
-      version = 13;
-    };
-    linux = {
-      execFormat = elf;
-      families = { };
-    };
-    netbsd = {
-      execFormat = elf;
-      families = { inherit bsd; };
-    };
-    none = {
-      execFormat = unknown;
-      families = { };
-    };
-    openbsd = {
-      execFormat = elf;
-      families = { inherit bsd; };
-    };
-    solaris = {
-      execFormat = elf;
-      families = { };
-    };
-    wasi = {
-      execFormat = wasm;
-      families = { };
-    };
-    redox = {
-      execFormat = elf;
-      families = { };
-    };
-    windows = {
-      execFormat = pe;
-      families = { };
-    };
-    ghcjs = {
-      execFormat = unknown;
-      families = { };
-    };
-    genode = {
-      execFormat = elf;
-      families = { };
-    };
-    mmixware = {
-      execFormat = unknown;
-      families = { };
-    };
-  } // {
-    # aliases
-    # 'darwin' is the kernel for all of them. We choose macOS by default.
-    darwin = kernels.macos;
-    watchos = kernels.ios;
-    tvos = kernels.ios;
-    win32 = kernels.windows;
-  };
 
   ################################################################################
 
@@ -603,24 +668,34 @@ in rec {
     # Note: eabi is specific to ARM and PowerPC.
     # On PowerPC, this corresponds to PPCEABI.
     # On ARM, this corresponds to ARMEABI.
-    eabi = { float = "soft"; };
-    eabihf = { float = "hard"; };
+    eabi = {
+      float = "soft";
+    };
+    eabihf = {
+      float = "hard";
+    };
 
     # Other architectures should use ELF in embedded situations.
     elf = { };
 
     androideabi = { };
     android = {
-      assertions = [{
-        assertion = platform: !platform.isAarch32;
-        message = ''
-          The "android" ABI is not for 32-bit ARM. Use "androideabi" instead.
-        '';
-      }];
+      assertions = [
+        {
+          assertion = platform: !platform.isAarch32;
+          message = ''
+            The "android" ABI is not for 32-bit ARM. Use "androideabi" instead.
+          '';
+        }
+      ];
     };
 
-    gnueabi = { float = "soft"; };
-    gnueabihf = { float = "hard"; };
+    gnueabi = {
+      float = "soft";
+    };
+    gnueabihf = {
+      float = "hard";
+    };
     gnu = {
       assertions = [
         {
@@ -637,24 +712,44 @@ in rec {
         }
       ];
     };
-    gnuabi64 = { abi = "64"; };
-    muslabi64 = { abi = "64"; };
+    gnuabi64 = {
+      abi = "64";
+    };
+    muslabi64 = {
+      abi = "64";
+    };
 
     # NOTE: abi=n32 requires a 64-bit MIPS chip!  That is not a typo.
     # It is basically the 64-bit abi with 32-bit pointers.  Details:
     # https://www.linux-mips.org/pub/linux/mips/doc/ABI/MIPS-N32-ABI-Handbook.pdf
-    gnuabin32 = { abi = "n32"; };
-    muslabin32 = { abi = "n32"; };
+    gnuabin32 = {
+      abi = "n32";
+    };
+    muslabin32 = {
+      abi = "n32";
+    };
 
-    gnuabielfv2 = { abi = "elfv2"; };
-    gnuabielfv1 = { abi = "elfv1"; };
+    gnuabielfv2 = {
+      abi = "elfv2";
+    };
+    gnuabielfv1 = {
+      abi = "elfv1";
+    };
 
-    musleabi = { float = "soft"; };
-    musleabihf = { float = "hard"; };
+    musleabi = {
+      float = "soft";
+    };
+    musleabihf = {
+      float = "hard";
+    };
     musl = { };
 
-    uclibceabi = { float = "soft"; };
-    uclibceabihf = { float = "hard"; };
+    uclibceabi = {
+      float = "soft";
+    };
+    uclibceabihf = {
+      float = "hard";
+    };
     uclibc = { };
 
     unknown = { };
@@ -664,73 +759,111 @@ in rec {
 
   types.parsedPlatform = mkOptionType {
     name = "system";
-    description =
-      "fully parsed representation of llvm- or nix-style platform tuple";
+    description = "fully parsed representation of llvm- or nix-style platform tuple";
     merge = mergeOneOption;
-    check = { cpu, vendor, kernel, abi, }:
-      types.cpuType.check cpu && types.vendor.check vendor
-      && types.kernel.check kernel && types.abi.check abi;
+    check =
+      {
+        cpu,
+        vendor,
+        kernel,
+        abi,
+      }:
+      types.cpuType.check cpu
+      && types.vendor.check vendor
+      && types.kernel.check kernel
+      && types.abi.check abi;
   };
 
   isSystem = isType "system";
 
-  mkSystem = components:
+  mkSystem =
+    components:
     assert types.parsedPlatform.check components;
     setType "system" components;
 
-  mkSkeletonFromList = l:
+  mkSkeletonFromList =
+    l:
     {
-      "1" = if elemAt l 0 == "avr" then {
-        cpu = elemAt l 0;
-        kernel = "none";
-        abi = "unknown";
-      } else
-        throw "Target specification with 1 components is ambiguous";
+      "1" =
+        if elemAt l 0 == "avr" then
+          {
+            cpu = elemAt l 0;
+            kernel = "none";
+            abi = "unknown";
+          }
+        else
+          throw "Target specification with 1 components is ambiguous";
       "2" =
         # We only do 2-part hacks for things Nix already supports
-        if elemAt l 1 == "cygwin" then {
-          cpu = elemAt l 0;
-          kernel = "windows";
-          abi = "cygnus";
-        }
+        if elemAt l 1 == "cygwin" then
+          {
+            cpu = elemAt l 0;
+            kernel = "windows";
+            abi = "cygnus";
+          }
         # MSVC ought to be the default ABI so this case isn't needed. But then it
         # becomes difficult to handle the gnu* variants for Aarch32 correctly for
         # minGW. So it's easier to make gnu* the default for the MinGW, but
         # hack-in MSVC for the non-MinGW case right here.
-        else if elemAt l 1 == "windows" then {
-          cpu = elemAt l 0;
-          kernel = "windows";
-          abi = "msvc";
-        } else if (elemAt l 1) == "elf" then {
-          cpu = elemAt l 0;
-          vendor = "unknown";
-          kernel = "none";
-          abi = elemAt l 1;
-        } else {
-          cpu = elemAt l 0;
-          kernel = elemAt l 1;
-        };
+        else if elemAt l 1 == "windows" then
+          {
+            cpu = elemAt l 0;
+            kernel = "windows";
+            abi = "msvc";
+          }
+        else if (elemAt l 1) == "elf" then
+          {
+            cpu = elemAt l 0;
+            vendor = "unknown";
+            kernel = "none";
+            abi = elemAt l 1;
+          }
+        else
+          {
+            cpu = elemAt l 0;
+            kernel = elemAt l 1;
+          };
       "3" =
         # cpu-kernel-environment
-        if elemAt l 1 == "linux"
-        || elem (elemAt l 2) [ "eabi" "eabihf" "elf" "gnu" ] then {
-          cpu = elemAt l 0;
-          kernel = elemAt l 1;
-          abi = elemAt l 2;
-          vendor = "unknown";
-        }
+        if
+          elemAt l 1 == "linux"
+          || elem (elemAt l 2) [
+            "eabi"
+            "eabihf"
+            "elf"
+            "gnu"
+          ]
+        then
+          {
+            cpu = elemAt l 0;
+            kernel = elemAt l 1;
+            abi = elemAt l 2;
+            vendor = "unknown";
+          }
         # cpu-vendor-os
-        else if elemAt l 1 == "apple"
-        || elem (elemAt l 2) [ "wasi" "redox" "mmixware" "ghcjs" "mingw32" ]
-        || hasPrefix "freebsd" (elemAt l 2) || hasPrefix "netbsd" (elemAt l 2)
-        || hasPrefix "genode" (elemAt l 2) then {
-          cpu = elemAt l 0;
-          vendor = elemAt l 1;
-          kernel = if elemAt l 2 == "mingw32" then
-            "windows" # autotools breaks on -gnu for window
-          else
-            elemAt l 2;
-        } else
+        else if
+          elemAt l 1 == "apple"
+          || elem (elemAt l 2) [
+            "wasi"
+            "redox"
+            "mmixware"
+            "ghcjs"
+            "mingw32"
+          ]
+          || hasPrefix "freebsd" (elemAt l 2)
+          || hasPrefix "netbsd" (elemAt l 2)
+          || hasPrefix "genode" (elemAt l 2)
+        then
+          {
+            cpu = elemAt l 0;
+            vendor = elemAt l 1;
+            kernel =
+              if elemAt l 2 == "mingw32" then
+                "windows" # autotools breaks on -gnu for window
+              else
+                elemAt l 2;
+          }
+        else
           throw "Target specification with 3 components is ambiguous";
       "4" = {
         cpu = elemAt l 0;
@@ -738,16 +871,25 @@ in rec {
         kernel = elemAt l 2;
         abi = elemAt l 3;
       };
-    }.${toString (length l)} or (throw
-      "system string has invalid number of hyphen-separated components");
+    }
+    .${toString (length l)}
+    or (throw "system string has invalid number of hyphen-separated components");
 
   # This should revert the job done by config.guess from the gcc compiler.
-  mkSystemFromSkeleton = { cpu,
-    # Optional, but fallback too complex for here.
-    # Inferred below instead.
-    vendor ? assert false; null, kernel,
-    # Also inferred below
-    abi ? assert false; null, }@args:
+  mkSystemFromSkeleton =
+    {
+      cpu,
+      # Optional, but fallback too complex for here.
+      # Inferred below instead.
+      vendor ?
+        assert false;
+        null,
+      kernel,
+      # Also inferred below
+      abi ?
+        assert false;
+        null,
+    }@args:
     let
       getCpu = name: cpuTypes.${name} or (throw "Unknown CPU type: ${name}");
       getVendor = name: vendors.${name} or (throw "Unknown vendor: ${name}");
@@ -756,44 +898,50 @@ in rec {
 
       parsed = {
         cpu = getCpu args.cpu;
-        vendor = if args ? vendor then
-          getVendor args.vendor
-        else if isDarwin parsed then
-          vendors.apple
-        else if isWindows parsed then
-          vendors.pc
-        else
-          vendors.unknown;
-        kernel = if hasPrefix "darwin" args.kernel then
-          getKernel "darwin"
-        else if hasPrefix "netbsd" args.kernel then
-          getKernel "netbsd"
-        else
-          getKernel (removeAbiSuffix args.kernel);
-        abi = if args ? abi then
-          getAbi args.abi
-        else if isLinux parsed || isWindows parsed then
-          if isAarch32 parsed then
-            if versionAtLeast (parsed.cpu.version or "0") "6" then
-              abis.gnueabihf
-            else
-              abis.gnueabi
-              # Default ppc64 BE to ELFv2
-          else if isPower64 parsed && isBigEndian parsed then
-            abis.gnuabielfv2
+        vendor =
+          if args ? vendor then
+            getVendor args.vendor
+          else if isDarwin parsed then
+            vendors.apple
+          else if isWindows parsed then
+            vendors.pc
           else
-            abis.gnu
-        else
-          abis.unknown;
+            vendors.unknown;
+        kernel =
+          if hasPrefix "darwin" args.kernel then
+            getKernel "darwin"
+          else if hasPrefix "netbsd" args.kernel then
+            getKernel "netbsd"
+          else
+            getKernel (removeAbiSuffix args.kernel);
+        abi =
+          if args ? abi then
+            getAbi args.abi
+          else if isLinux parsed || isWindows parsed then
+            if isAarch32 parsed then
+              if versionAtLeast (parsed.cpu.version or "0") "6" then abis.gnueabihf else abis.gnueabi
+            # Default ppc64 BE to ELFv2
+            else if isPower64 parsed && isBigEndian parsed then
+              abis.gnuabielfv2
+            else
+              abis.gnu
+          else
+            abis.unknown;
       };
-    in mkSystem parsed;
+    in
+    mkSystem parsed;
 
-  mkSystemFromString = s:
-    mkSystemFromSkeleton (mkSkeletonFromList (splitString "-" s));
+  mkSystemFromString = s: mkSystemFromSkeleton (mkSkeletonFromList (splitString "-" s));
 
   kernelName = kernel: kernel.name + toString (kernel.version or "");
 
-  doubleFromSystem = { cpu, kernel, abi, ... }:
+  doubleFromSystem =
+    {
+      cpu,
+      kernel,
+      abi,
+      ...
+    }:
     if abi == abis.cygnus then
       "${cpu.name}-cygwin"
     else if kernel.families ? darwin then
@@ -801,16 +949,22 @@ in rec {
     else
       "${cpu.name}-${kernelName kernel}";
 
-  tripleFromSystem = { cpu, vendor, kernel, abi, ... }@sys:
+  tripleFromSystem =
+    {
+      cpu,
+      vendor,
+      kernel,
+      abi,
+      ...
+    }@sys:
     assert isSystem sys;
     let
-      optExecFormat = optionalString (kernel.name == "netbsd"
-        && gnuNetBSDDefaultExecFormat cpu != kernel.execFormat)
-        kernel.execFormat.name;
+      optExecFormat = optionalString (
+        kernel.name == "netbsd" && gnuNetBSDDefaultExecFormat cpu != kernel.execFormat
+      ) kernel.execFormat.name;
       optAbi = optionalString (abi != abis.unknown) "-${abi.name}";
-    in "${cpu.name}-${vendor.name}-${
-      kernelName kernel
-    }${optExecFormat}${optAbi}";
+    in
+    "${cpu.name}-${vendor.name}-${kernelName kernel}${optExecFormat}${optAbi}";
 
   ################################################################################
 }

@@ -1,4 +1,5 @@
-{ lib, ... }: {
+{ lib, ... }:
+{
 
   options.value = lib.mkOption { type = lib.types.anything; };
 
@@ -20,5 +21,4 @@
       value.float = 0.1;
     }
   ];
-
 }

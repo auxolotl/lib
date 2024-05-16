@@ -1,5 +1,6 @@
 # snippets that can be shared by multiple fetchers (pkgs/build-support)
-{ lib }: {
+{ lib }:
+{
   proxyImpureEnvVars = [
     # We borrow these environment variables from the caller to allow
     # easy proxy configuration.  This is impure, but a fixed-output
